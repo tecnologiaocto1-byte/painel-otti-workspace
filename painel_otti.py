@@ -183,7 +183,7 @@ with st.sidebar:
     st.markdown("---")
     st.write(f"Olá, **{user['nome_usuario']}**")
     
-    dark_on = (st.session_state['theme'] == 'dark')
+    dark_on = (st.session_state['theme'] == 'light')
     if st.toggle("🌙 Modo Escuro", value=dark_on):
         if st.session_state['theme'] != 'dark':
             st.session_state['theme'] = 'dark'
@@ -390,4 +390,5 @@ if perfil == 'admin' and len(tabs) > 4:
                         """)
 
         except Exception as e: st.error(f"Erro: {e}")
+
 
