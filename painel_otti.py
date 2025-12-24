@@ -389,22 +389,5 @@ if perfil == 'admin' and len(tabs) > 4:
                         - **Shimmer:** Feminina/Sofisticada
                         """)
 
-                st.markdown("##### 3. Configuração Técnica (Tabela)")
-                
-                # DATA_EDITOR COM JSON SANITIZADO
-                new_c = st.data_editor(curr_c, use_container_width=True, height=400)
-                
-                if st.button("SALVAR TUDO", type="primary"):
-                    new_c['openai_voice'] = nova_voz
-                    new_c['temperature'] = nova_temp 
-                    
-                    supabase.table('clientes').update({
-                        'config_fluxo': json.dumps(new_c),
-                        'prompt_full': new_p
-                    }).eq('id', c_id).execute()
-                    
-                    st.success("Cérebro Atualizado com Sucesso!")
-                    time.sleep(1)
-                    st.rerun()
-
         except Exception as e: st.error(f"Erro: {e}")
+
