@@ -16,7 +16,7 @@ st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 C_BG_DARK     = "#001024" 
 C_BG_LIGHT    = "#F0F2F5"
 C_SIDEBAR_DARK = "#020A14"
-C_SIDEBAR_LIGHT = "#031A89" # Azul Octo na Sidebar do modo claro
+C_SIDEBAR_LIGHT = "#031A89"
 C_TEXT_DARK   = "#F8FAFC"
 C_TEXT_LIGHT  = "#101828"
 
@@ -28,8 +28,8 @@ PALETAS = {
         'sidebar': C_SIDEBAR_DARK,
         'text': C_TEXT_DARK,
         'card': "rgba(3, 26, 137, 0.2)",
-        'input_bg': "#0B1221",
-        'input_text': "#FFFFFF", # Texto Branco no Input Escuro
+        'input_bg': "#0B1221", # Fundo escuro para inputs e botões secundários
+        'input_text': "#FFFFFF",
         'metric_val': "#E7F9A9",
         'chart_template': 'plotly_dark'
     },
@@ -38,8 +38,8 @@ PALETAS = {
         'sidebar': C_SIDEBAR_LIGHT,
         'text': C_TEXT_LIGHT,
         'card': "#FFFFFF",
-        'input_bg': "#FFFFFF",
-        'input_text': "#000000", # Texto Preto no Input Claro
+        'input_bg': "#FFFFFF", # Fundo branco para inputs e botões secundários
+        'input_text': "#000000",
         'metric_val': "#3F00FF",
         'chart_template': 'plotly_white'
     }
@@ -61,7 +61,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (CORREÇÃO DO SELECTBOX)
+# 3. CSS (BOTÃO PAUSAR CORRIGIDO)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -71,18 +71,11 @@ st.markdown(f"""
     
     /* --- SIDEBAR --- */
     section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(255,255,255,0.1); }}
-    
-    /* CORREÇÃO AQUI: Específico para textos, NÃO para divs genéricos (que quebravam o selectbox) */
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3, 
     section[data-testid="stSidebar"] p, 
-    section[data-testid="stSidebar"] label, 
-    section[data-testid="stSidebar"] span {{ 
-        color: #FFFFFF !important; 
-    }}
+    section[data-testid="stSidebar"] span, 
+    section[data-testid="stSidebar"] div, 
+    section[data-testid="stSidebar"] label {{ color: #FFFFFF !important; }}
 
-    /* Tipografia Geral */
     h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
     p, label {{ color: {P['text']} !important; }}
 
@@ -93,25 +86,34 @@ st.markdown(f"""
         border: 1px solid #3F00FF;
         border-radius: 8px;
     }}
-    
-    /* AQUI O NOME DO CLIENTE VAI APARECER */
     div[data-baseweb="select"] > div {{
         background-color: {P['input_bg']} !important;
-        color: {P['input_text']} !important; /* Preto no claro, Branco no escuro */
+        color: {P['input_text']} !important;
         border-color: #3F00FF !important;
     }}
-    /* Garante que o texto selecionado tenha a cor certa */
-    div[data-baseweb="select"] div {{
-        color: {P['input_text']} !important; 
-    }}
+    div[data-baseweb="select"] span {{ color: {P['input_text']} !important; }}
     div[data-baseweb="popover"] {{ background-color: {P['input_bg']} !important; }}
     div[data-baseweb="option"] {{ color: {P['input_text']} !important; }}
 
-    /* Botões */
+    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) --- */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
     }}
+
+    /* --- BOTÃO SECUNDÁRIO (PAUSAR/ATIVAR) - CORRIGIDO --- */
+    /* Agora ele pega a cor de fundo do input (Escuro no Dark, Branco no Light) */
+    .main .stButton button {{
+        background-color: {P['input_bg']} !important;
+        color: {P['text']} !important;
+        border: 1px solid #3F00FF !important;
+    }}
+    .main .stButton button:hover {{
+        border-color: #E7F9A9 !important;
+        color: #3F00FF !important;
+    }}
+
+    /* --- BOTÃO SIDEBAR (SAIR) --- */
     section[data-testid="stSidebar"] button {{
         background-color: transparent !important; border: 1px solid rgba(255,255,255,0.5) !important;
     }}
@@ -376,7 +378,7 @@ if perfil == 'admin' and len(tabs) > 4:
                     
                     temp_atual = float(curr_c.get('temperature', 0.5))
                     nova_temp = st.slider("Criatividade da Resposta:", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
-                    st.caption("0.0 = Mais Robótico | 1.0 = Mais Criativo")
+                    st.caption("🤖 0.0 = Mais Robótico | 🎨 1.0 = Mais Criativo")
                     
                     with st.expander("🗣️ Guia de Vozes"):
                         st.markdown("""
@@ -389,6 +391,7 @@ if perfil == 'admin' and len(tabs) > 4:
 
                 st.markdown("##### 3. Configuração Técnica (Tabela)")
                 
+                # DATA_EDITOR COM JSON SANITIZADO
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
                 if st.button("SALVAR TUDO", type="primary"):
