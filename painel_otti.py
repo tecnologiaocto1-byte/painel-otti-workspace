@@ -19,6 +19,7 @@ C_ELECTRIC    = "#3F00FF"
 C_CORNFLOWER  = "#5396FF"
 C_KHAKI       = "#E7F9A9"
 C_WHITE       = "#F8FAFC"
+C_DARK_TEXT   = "#02040A"
 
 if 'theme' not in st.session_state:
     st.session_state['theme'] = 'dark'
@@ -32,16 +33,18 @@ PALETAS = {
         'border': C_ELECTRIC,
         'input_bg': '#0B1221',
         'input_text': C_WHITE,
+        'btn_sec_text': C_WHITE, # Texto do botão secundário no dark
         'chart_template': 'plotly_dark'
     },
     'light': {
         'bg': '#F0F2F5',
         'sidebar': C_RESOLUTION,
-        'text': C_BLACK_PEARL,
+        'text': C_DARK_TEXT,
         'card': '#FFFFFF',
         'border': '#D1D5DB',
         'input_bg': '#FFFFFF',
-        'input_text': C_BLACK_PEARL,
+        'input_text': C_DARK_TEXT,
+        'btn_sec_text': C_DARK_TEXT, # Texto do botão secundário no light
         'chart_template': 'plotly_white'
     }
 }
@@ -64,7 +67,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (CORREÇÃO VISUAL DEFINITIVA)
+# 3. CSS (CORRIGIDO PARA O BOTÃO SAIR E LOGIN)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -81,7 +84,7 @@ st.markdown(f"""
     h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
     p, label {{ color: {P['text']}; }}
 
-    /* Inputs e Selects */
+    /* Inputs */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']};
         color: {P['input_text']};
@@ -96,7 +99,7 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* --- BOTÃO PRIMARY (ROXO + TEXTO BRANCO) --- */
+    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) - ROXO FORÇADO --- */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important;
@@ -107,7 +110,6 @@ st.markdown(f"""
         font-weight: 600;
         text-transform: uppercase;
         font-size: 0.85rem;
-        transition: transform 0.1s;
     }}
     button[kind="primary"]:hover {{
         opacity: 0.9;
@@ -117,13 +119,20 @@ st.markdown(f"""
     }}
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
 
-    /* Botão Secundário (Logout) */
+    /* --- BOTÃO SECONDARY (SAIR/PAUSAR) - CORREÇÃO DE COR --- */
     button[kind="secondary"] {{
-        background: transparent !important;
+        background-color: transparent !important;
         border: 1px solid {P['border']} !important;
-        color: {P['text']} !important;
     }}
-    button[kind="secondary"] p {{ color: {P['text']} !important; }}
+    /* Força a cor do texto baseada no tema */
+    button[kind="secondary"] p {{
+        color: {P['btn_sec_text']} !important;
+    }}
+    /* Hover do secundário */
+    button[kind="secondary"]:hover {{
+        border-color: {C_ELECTRIC} !important;
+        background-color: rgba(63, 0, 255, 0.1) !important;
+    }}
 
     /* Cards */
     div[data-testid="stMetric"] {{
@@ -139,7 +148,7 @@ st.markdown(f"""
     }}
     label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
 
-    /* Login */
+    /* Login Wrapper */
     .login-wrapper {{
         margin-top: 10vh;
         max-width: 400px;
@@ -158,7 +167,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. LOGIN (ENTER FUNCIONA + CLIQUE ÚNICO)
+# 4. LOGIN (LÓGICA APERTADA)
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"): st.image("logo.png", width=width)
@@ -174,12 +183,11 @@ def render_login_screen():
         render_logo(width=120)
         st.markdown(f"<h3 style='margin-bottom:30px; color:{P['text']}; text-align:center;'>Otti Workspace</h3>", unsafe_allow_html=True)
         
-        # FORM = Enter funciona
         with st.form("login_master"):
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
             
-            # PRIMARY = CSS Roxo funciona
+            # Botão Primary
             submitted = st.form_submit_button("ACESSAR SISTEMA", use_container_width=True, type="primary")
             
             if submitted:
@@ -187,17 +195,17 @@ def render_login_screen():
                     st.warning("Preencha todos os campos.")
                 else:
                     if not supabase:
-                        st.error("Banco de dados desconectado.")
+                        st.error("Erro interno: Banco desconectado.")
                     else:
                         try:
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
                             if res.data:
                                 st.session_state['usuario_logado'] = res.data[0]
-                                st.rerun() # Rerun Imediato
+                                st.rerun()
                             else:
                                 st.error("Credenciais inválidas.")
                         except:
-                            st.error("Erro de conexão.")
+                            st.error("Erro de conexão. Verifique sua internet.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 if not st.session_state['usuario_logado']:
@@ -228,6 +236,7 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
+    # Botão SAIR tipo secondary (agora com cor corrigida)
     if st.button("SAIR", type="secondary"):
         st.session_state['usuario_logado'] = None
         st.rerun()
@@ -240,17 +249,15 @@ except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# SELEÇÃO DE CLIENTE (PERSISTÊNCIA)
+# CLIENTE (PERSISTÊNCIA)
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
-    
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
     if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
-        
+    
     idx = list(lista).index(st.session_state['last_cli'])
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
     st.session_state['last_cli'] = sel
-    
     c_data = df_kpis[df_kpis['nome_empresa'] == sel].iloc[0]
 else:
     filtro = df_kpis[df_kpis['cliente_id'] == user['cliente_id']]
@@ -402,13 +409,10 @@ with tabs[3]:
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (COMPLETO + VOZ)
+# 5. CÉREBRO (COM TEMPERATURA E VOZ)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
-        
-        st.info("💡 **Guia Rápido:** Defina a 'Voz da IA' para os áudios e edite o JSON para configurações técnicas.")
-
         try:
             res = supabase.table('clientes').select('config_fluxo, prompt_full').eq('id', c_id).execute()
             if res.data:
@@ -416,39 +420,43 @@ if perfil == 'admin' and len(tabs) > 4:
                 curr_c = d.get('config_fluxo')
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
-                # --- COLUNA 1: PROMPT + VOZ ---
-                col_ia1, col_ia2 = st.columns([2, 1])
-                
-                with col_ia1:
+                # --- COLUNA 1: PROMPT ---
+                c_p1, c_p2 = st.columns([2, 1])
+                with c_p1:
                     st.markdown("##### 1. Personalidade (Prompt)")
-                    new_p = st.text_area("", value=d.get('prompt_full','') or '', height=300)
+                    new_p = st.text_area("", value=d.get('prompt_full','') or '', height=350)
 
-                with col_ia2:
-                    st.markdown("##### 2. Voz da IA")
+                # --- COLUNA 2: CONTROLES ---
+                with c_p2:
+                    st.markdown("##### 2. Ajustes Finos")
+                    
+                    # Voz
                     vozes = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
                     v_atual = curr_c.get('openai_voice', 'alloy')
                     if v_atual not in vozes: v_atual = 'alloy'
+                    nova_voz = st.selectbox("Voz da IA:", vozes, index=vozes.index(v_atual))
                     
-                    nova_voz = st.selectbox("Selecione o timbre:", vozes, index=vozes.index(v_atual))
-                    
-                    with st.expander("ℹ️ Guia de Vozes"):
+                    # Temperatura (Slider) - 0.0 a 1.0
+                    temp_atual = float(curr_c.get('temperature', 0.7))
+                    nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
+                    st.caption("0.0 = Robótica/Precisa | 1.0 = Criativa/Solta")
+
+                    with st.expander("ℹ️ Dicas"):
                         st.markdown("""
-                        - **Alloy:** Neutra (Padrão)
-                        - **Echo:** Suave/Masculina
-                        - **Onyx:** Grave/Imponente
-                        - **Fable:** Narrativa
-                        - **Nova:** Alegre/Feminina (Festas!)
-                        - **Shimmer:** Sofisticada/Feminina
+                        - **Voz:** Escolha o timbre para os áudios.
+                        - **Temperatura:** Quanto maior, mais a IA 'inventa' e varia as frases. Para agendamentos, use 0.5 a 0.7.
                         """)
 
-                # --- JSON COMPLETO (SEM FILTRO) ---
+                # --- JSON COMPLETO ---
                 st.markdown("##### 3. Configuração Técnica (JSON Completo)")
                 curr_c['openai_voice'] = nova_voz
+                curr_c['temperature'] = nova_temp
                 
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
-                if st.button("SALVAR TUDO", type="primary"):
+                if st.button("SALVAR CÉREBRO", type="primary"):
                     new_c['openai_voice'] = nova_voz
+                    new_c['temperature'] = nova_temp
                     supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
                     st.success("Cérebro Atualizado com Sucesso!")
         except Exception as e: st.error(f"Erro: {e}")
