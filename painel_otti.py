@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 
 # ==============================================================================
-# 1. SETUP & CORES (MANUAL OCTO)
+# 1. SETUP & CORES
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
@@ -50,7 +50,7 @@ P = PALETAS[st.session_state['theme']]
 LOGO_URL = "https://cdn-icons-png.flaticon.com/512/10459/10459998.png"
 
 # ==============================================================================
-# 2. CONEXÃO DATABASE
+# 2. CONEXÃO
 # ==============================================================================
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
@@ -64,38 +64,24 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS BLINDADO (RECUPERADO DA VERSÃO QUE FUNCIONAVA)
+# 3. CSS (CORREÇÃO VISUAL DEFINITIVA)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
 
     /* Geral */
-    .stApp {{
-        background-color: {P['bg']};
-        color: {P['text']};
-        font-family: 'Inter', sans-serif;
-    }}
-
+    .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
+    
     /* Sidebar */
-    section[data-testid="stSidebar"] {{
-        background-color: {P['sidebar']};
-        border-right: 1px solid rgba(0,0,0,0.1);
-    }}
-    /* Força texto branco na sidebar independente do tema (para contraste no azul) */
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{
-        color: #FFFFFF !important;
-    }}
-
+    section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(0,0,0,0.1); }}
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: #FFFFFF !important; }}
+    
     /* Tipografia */
-    h1, h2, h3, h4 {{
-        font-family: 'Sora', sans-serif;
-        color: {P['text']} !important;
-        font-weight: 700;
-    }}
+    h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
     p, label {{ color: {P['text']}; }}
 
-    /* Inputs & Selects (CORREÇÃO DE LEGIBILIDADE) */
+    /* Inputs e Selects */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']};
         color: {P['input_text']};
@@ -110,7 +96,7 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* BOTÕES (CORREÇÃO DA COR BRANCA) */
+    /* --- BOTÃO PRIMARY (ROXO + TEXTO BRANCO) --- */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important;
@@ -127,20 +113,19 @@ st.markdown(f"""
         opacity: 0.9;
         transform: scale(1.02);
         color: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(63, 0, 255, 0.3);
     }}
-    /* Garante que o texto dentro do botão seja branco */
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
-    
-    /* Botão Secundário (Sair/Pausar) */
+
+    /* Botão Secundário (Logout) */
     button[kind="secondary"] {{
-        background-color: transparent !important;
+        background: transparent !important;
         border: 1px solid {P['border']} !important;
-    }}
-    button[kind="secondary"] p {{
         color: {P['text']} !important;
     }}
+    button[kind="secondary"] p {{ color: {P['text']} !important; }}
 
-    /* Cards KPI */
+    /* Cards */
     div[data-testid="stMetric"] {{
         background-color: {P['card']};
         border: 1px solid {P['border']};
@@ -152,12 +137,9 @@ st.markdown(f"""
         color: {C_KHAKI if st.session_state['theme'] == 'dark' else C_ELECTRIC} !important;
         font-family: 'Sora', sans-serif;
     }}
-    label[data-testid="stMetricLabel"] {{
-        color: {P['text']} !important;
-        opacity: 0.8;
-    }}
+    label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
 
-    /* Login Wrapper Centralizado */
+    /* Login */
     .login-wrapper {{
         margin-top: 10vh;
         max-width: 400px;
@@ -176,13 +158,11 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. FUNÇÃO DE LOGIN (LÓGICA BLINDADA DO V12)
+# 4. LOGIN (ENTER FUNCIONA + CLIQUE ÚNICO)
 # ==============================================================================
 def render_logo(width=100):
-    if os.path.exists("logo.png"):
-        st.image("logo.png", width=width)
-    else:
-        st.markdown(f"<h1 style='color:{C_ELECTRIC}; margin:0; font-family:Sora; text-align:center;'>OCTO</h1>", unsafe_allow_html=True)
+    if os.path.exists("logo.png"): st.image("logo.png", width=width)
+    else: st.markdown(f"<h1 style='color:{C_ELECTRIC}; margin:0; font-family:Sora; text-align:center;'>OCTO</h1>", unsafe_allow_html=True)
 
 if 'usuario_logado' not in st.session_state:
     st.session_state['usuario_logado'] = None
@@ -213,7 +193,7 @@ def render_login_screen():
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
                             if res.data:
                                 st.session_state['usuario_logado'] = res.data[0]
-                                st.rerun() # ATUALIZA NA HORA
+                                st.rerun() # Rerun Imediato
                             else:
                                 st.error("Credenciais inválidas.")
                         except:
@@ -225,19 +205,18 @@ if not st.session_state['usuario_logado']:
     st.stop()
 
 # ==============================================================================
-# 5. DASHBOARD PRINCIPAL
+# 5. DASHBOARD
 # ==============================================================================
 user = st.session_state['usuario_logado']
 perfil = user['perfil']
 
-# --- SIDEBAR ---
+# SIDEBAR
 with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
     render_logo(width=130)
     st.markdown("---")
     st.write(f"Olá, **{user['nome_usuario']}**")
     
-    # Toggle Theme
     dark_on = (st.session_state['theme'] == 'dark')
     if st.toggle("🌙 Modo Escuro", value=dark_on):
         if st.session_state['theme'] != 'dark':
@@ -253,7 +232,7 @@ with st.sidebar:
         st.session_state['usuario_logado'] = None
         st.rerun()
 
-# --- DADOS ---
+# DADOS
 if not supabase: st.stop()
 try:
     df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
@@ -261,18 +240,15 @@ except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# --- SELEÇÃO DE CLIENTE (PERSISTÊNCIA CORRIGIDA) ---
+# SELEÇÃO DE CLIENTE (PERSISTÊNCIA)
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     
-    # Lógica de memória para não resetar
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
     if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
         
     idx = list(lista).index(st.session_state['last_cli'])
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
-    
-    # Atualiza memória
     st.session_state['last_cli'] = sel
     
     c_data = df_kpis[df_kpis['nome_empresa'] == sel].iloc[0]
@@ -284,7 +260,7 @@ else:
 c_id = int(c_data['cliente_id'])
 active = not bool(c_data['bot_pausado'])
 
-# --- HEADER ---
+# HEADER
 c1, c2 = st.columns([3, 1])
 with c1:
     st.title(c_data['nome_empresa'])
@@ -299,7 +275,7 @@ with c2:
 
 st.divider()
 
-# --- KPIS ---
+# KPI
 tot = c_data['total_mensagens']
 sav = round((tot * 1.5) / 60, 1)
 rev = float(c_data['receita_total'] or 0)
@@ -312,10 +288,10 @@ k4.metric("Status", "Online" if active else "Offline")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- ABAS ---
+# ABAS
 tabs = st.tabs(["Analytics", "Espião", "Produtos", "Agenda", "Cérebro"])
 
-# 1. ANALYTICS (NEON)
+# 1. ANALYTICS
 with tabs[0]:
     try:
         r_s = supabase.table('agendamentos_salao').select('created_at, valor_sinal_registrado, status, produto_salao_id').eq('cliente_id', c_id).execute().data
@@ -335,7 +311,6 @@ with tabs[0]:
             df = df[df['st'] != 'Cancelado']
             
             c_g1, c_g2 = st.columns(2)
-            
             with c_g1:
                 st.markdown("##### Receita Diária")
                 df_g = df.groupby('dt')['v'].sum().reset_index()
@@ -343,7 +318,6 @@ with tabs[0]:
                 fig.update_traces(line_color=C_ELECTRIC, line_width=3)
                 fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig, use_container_width=True)
-            
             with c_g2:
                 st.markdown("##### Produtos Mais Vendidos")
                 df_top = df['p'].value_counts().reset_index().head(5)
@@ -351,10 +325,8 @@ with tabs[0]:
                 fig2.update_traces(marker_color=C_CORNFLOWER)
                 fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig2, use_container_width=True)
-        else:
-            st.info("Sem dados.")
-    except Exception as e:
-        st.error(f"Erro Visual: {e}")
+        else: st.info("Sem dados.")
+    except Exception as e: st.error(f"Erro Visual: {e}")
 
 # 2. ESPIÃO
 with tabs[1]:
@@ -405,40 +377,32 @@ with tabs[2]:
                 supabase.table('produtos').insert({"cliente_id": c_id, "nome": n, "categoria": c, "ativo": True, "regras_preco": json.dumps(js)}).execute()
                 st.rerun()
 
-# 4. AGENDA (LÓGICA DUPLA)
+# 4. AGENDA
 with tabs[3]:
     st.subheader("Próximos Agendamentos")
     r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute()
     pmap = {p['id']: p['nome'] for p in r_pr.data} if r_pr.data else {}
-
     try:
         df_final = pd.DataFrame()
-        # Tabela Casa do Decorador
         rs = supabase.table('agendamentos_salao').select('data_reserva, valor_total_registrado, cliente_final_waid, produto_salao_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
-        # Tabela Etnia
         rv = supabase.table('agendamentos').select('data_hora_inicio, valor_total_registrado, servico_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
-
         if rs.data:
             d = pd.DataFrame(rs.data)
             d['Item'] = d['produto_salao_id'].map(pmap).fillna('Salão')
             d['Data'] = pd.to_datetime(d['data_reserva']).dt.strftime('%d/%m/%Y')
             df_final = d[['Data', 'valor_total_registrado', 'Item', 'cliente_final_waid']]
             df_final.columns = ['Data', 'Valor (R$)', 'O que', 'Cliente']
-            
         elif rv.data:
             d = pd.DataFrame(rv.data)
             d['Item'] = d['servico_id'].map(pmap).fillna('Serviço')
             d['Data/Hora'] = pd.to_datetime(d['data_hora_inicio']).dt.strftime('%d/%m/%Y %H:%M')
             df_final = d[['Data/Hora', 'valor_total_registrado', 'Item']]
             df_final.columns = ['Data/Hora', 'Valor (R$)', 'O que']
-            
-        if not df_final.empty:
-            st.dataframe(df_final, use_container_width=True, hide_index=True)
-        else:
-            st.info("Agenda vazia.")
+        if not df_final.empty: st.dataframe(df_final, use_container_width=True, hide_index=True)
+        else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (COMPLETO)
+# 5. CÉREBRO (COMPLETO + VOZ)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -477,13 +441,13 @@ if perfil == 'admin' and len(tabs) > 4:
                         - **Shimmer:** Sofisticada/Feminina
                         """)
 
-                # --- JSON COMPLETO ---
+                # --- JSON COMPLETO (SEM FILTRO) ---
                 st.markdown("##### 3. Configuração Técnica (JSON Completo)")
                 curr_c['openai_voice'] = nova_voz
                 
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
-                if st.button("SALVAR CÉREBRO", type="primary"):
+                if st.button("SALVAR TUDO", type="primary"):
                     new_c['openai_voice'] = nova_voz
                     supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
                     st.success("Cérebro Atualizado com Sucesso!")
