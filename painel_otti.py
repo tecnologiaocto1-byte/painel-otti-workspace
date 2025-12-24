@@ -442,7 +442,7 @@ if perfil == 'admin' and len(tabs) > 4:
                     # Temperatura (Slider)
                     temp_atual = float(curr_c.get('temperature', 0.7))
                     nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
-                    st.caption("0.0 = Precisa | 1.0 = Criativa")
+                    st.caption("0.0 = Robótica | 1.0 = Humanizada")
 
                     # GUIA DE VOZES NO EXPANDER
                     with st.expander("🗣️ Entenda os tipos de Voz"):
@@ -468,3 +468,4 @@ if perfil == 'admin' and len(tabs) > 4:
                     supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
                     st.success("Cérebro Atualizado com Sucesso!")
         except Exception as e: st.error(f"Erro: {e}")
+
