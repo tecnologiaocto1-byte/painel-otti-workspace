@@ -28,9 +28,11 @@ PALETAS = {
         'sidebar': C_SIDEBAR_DARK,
         'text': C_TEXT_DARK,
         'card': "rgba(3, 26, 137, 0.2)",
-        'input_bg': "#0B1221", # Fundo escuro para inputs e botões secundários
-        'input_text': "#FFFFFF",
+        'input_bg': "#0B1221", # Fundo escuro
+        'input_text': "#FFFFFF", # Texto Branco
         'metric_val': "#E7F9A9",
+        'btn_bg': "#0B1221", # Fundo do botão secundário no Dark
+        'btn_text': "#FFFFFF",
         'chart_template': 'plotly_dark'
     },
     'light': {
@@ -38,9 +40,11 @@ PALETAS = {
         'sidebar': C_SIDEBAR_LIGHT,
         'text': C_TEXT_LIGHT,
         'card': "#FFFFFF",
-        'input_bg': "#FFFFFF", # Fundo branco para inputs e botões secundários
-        'input_text': "#000000",
+        'input_bg': "#FFFFFF", # Fundo branco
+        'input_text': "#000000", # Texto Preto (CRÍTICO PARA O SELECTBOX)
         'metric_val': "#3F00FF",
+        'btn_bg': "#FFFFFF", # Fundo do botão secundário no Light
+        'btn_text': "#000000",
         'chart_template': 'plotly_white'
     }
 }
@@ -61,7 +65,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (BOTÃO PAUSAR CORRIGIDO)
+# 3. CSS (CORREÇÕES V30)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -71,9 +75,10 @@ st.markdown(f"""
     
     /* --- SIDEBAR --- */
     section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(255,255,255,0.1); }}
+    
+    /* Regra Geral: Texto Branco na Sidebar (pois o fundo é sempre escuro/azul) */
     section[data-testid="stSidebar"] p, 
     section[data-testid="stSidebar"] span, 
-    section[data-testid="stSidebar"] div, 
     section[data-testid="stSidebar"] label {{ color: #FFFFFF !important; }}
 
     h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
@@ -86,12 +91,20 @@ st.markdown(f"""
         border: 1px solid #3F00FF;
         border-radius: 8px;
     }}
+    
+    /* CRÍTICO: Container do Selectbox */
     div[data-baseweb="select"] > div {{
         background-color: {P['input_bg']} !important;
-        color: {P['input_text']} !important;
         border-color: #3F00FF !important;
     }}
-    div[data-baseweb="select"] span {{ color: {P['input_text']} !important; }}
+    
+    /* CRÍTICO: Texto dentro do Selectbox (Sobrescreve a regra da Sidebar) */
+    /* Isso garante que no Light Mode (fundo branco) a letra seja PRETA */
+    div[data-baseweb="select"] span, div[data-baseweb="select"] div {{ 
+        color: {P['input_text']} !important; 
+    }}
+    
+    /* Menu Dropdown */
     div[data-baseweb="popover"] {{ background-color: {P['input_bg']} !important; }}
     div[data-baseweb="option"] {{ color: {P['input_text']} !important; }}
 
@@ -102,13 +115,13 @@ st.markdown(f"""
     }}
 
     /* --- BOTÃO SECUNDÁRIO (PAUSAR/ATIVAR) - CORRIGIDO --- */
-    /* Agora ele pega a cor de fundo do input (Escuro no Dark, Branco no Light) */
-    .main .stButton button {{
-        background-color: {P['input_bg']} !important;
-        color: {P['text']} !important;
+    /* Força a cor correta no Dark Mode para não ficar branco */
+    div[data-testid="stAppViewContainer"] .main .stButton > button {{
+        background-color: {P['btn_bg']} !important;
+        color: {P['btn_text']} !important;
         border: 1px solid #3F00FF !important;
     }}
-    .main .stButton button:hover {{
+    div[data-testid="stAppViewContainer"] .main .stButton > button:hover {{
         border-color: #E7F9A9 !important;
         color: #3F00FF !important;
     }}
@@ -388,23 +401,5 @@ if perfil == 'admin' and len(tabs) > 4:
                         - **Nova:** Feminina/Alegre
                         - **Shimmer:** Feminina/Sofisticada
                         """)
-
-                st.markdown("##### 3. Configuração Técnica (Tabela)")
-                
-                # DATA_EDITOR COM JSON SANITIZADO
-                new_c = st.data_editor(curr_c, use_container_width=True, height=400)
-                
-                if st.button("SALVAR TUDO", type="primary"):
-                    new_c['openai_voice'] = nova_voz
-                    new_c['temperature'] = nova_temp 
-                    
-                    supabase.table('clientes').update({
-                        'config_fluxo': json.dumps(new_c),
-                        'prompt_full': new_p
-                    }).eq('id', c_id).execute()
-                    
-                    st.success("Cérebro Atualizado com Sucesso!")
-                    time.sleep(1)
-                    st.rerun()
 
         except Exception as e: st.error(f"Erro: {e}")
