@@ -8,11 +8,11 @@ import os
 from datetime import datetime
 
 # ==============================================================================
-# 1. SETUP & CORES
+# 1. CONFIGURAÇÕES INICIAIS
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
-# Cores Oficiais
+# Cores
 C_BLACK_PEARL = "#001024"
 C_RESOLUTION  = "#031A89"
 C_ELECTRIC    = "#3F00FF"
@@ -21,37 +21,16 @@ C_KHAKI       = "#E7F9A9"
 C_WHITE       = "#F8FAFC"
 C_DARK_TEXT   = "#02040A"
 
-if 'theme' not in st.session_state:
-    st.session_state['theme'] = 'dark'
+if 'theme' not in st.session_state: st.session_state['theme'] = 'dark'
 
 PALETAS = {
-    'dark': {
-        'bg': C_BLACK_PEARL,
-        'sidebar': '#020A14',
-        'text': C_WHITE,
-        'card': 'rgba(3, 26, 137, 0.2)',
-        'border': C_ELECTRIC,
-        'input_bg': '#0B1221',
-        'input_text': C_WHITE,
-        'chart_template': 'plotly_dark'
-    },
-    'light': {
-        'bg': '#F0F2F5',
-        'sidebar': C_RESOLUTION,
-        'text': C_DARK_TEXT,
-        'card': '#FFFFFF',
-        'border': '#D1D5DB',
-        'input_bg': '#FFFFFF',
-        'input_text': C_DARK_TEXT,
-        'chart_template': 'plotly_white'
-    }
+    'dark': { 'bg': C_BLACK_PEARL, 'sidebar': '#020A14', 'text': C_WHITE, 'card': 'rgba(3, 26, 137, 0.2)', 'border': C_ELECTRIC, 'input_bg': '#0B1221', 'input_text': C_WHITE, 'chart_template': 'plotly_dark' },
+    'light': { 'bg': '#F0F2F5', 'sidebar': C_RESOLUTION, 'text': C_DARK_TEXT, 'card': '#FFFFFF', 'border': '#D1D5DB', 'input_bg': '#FFFFFF', 'input_text': C_DARK_TEXT, 'chart_template': 'plotly_white' }
 }
-
 P = PALETAS[st.session_state['theme']]
-LOGO_URL = "https://cdn-icons-png.flaticon.com/512/10459/10459998.png"
 
 # ==============================================================================
-# 2. CONEXÃO
+# 2. CONEXÃO SUPABASE
 # ==============================================================================
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
@@ -65,120 +44,65 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (CORREÇÕES ESPECÍFICAS DE SIDEBAR E LOGIN)
+# 3. CSS (VISUAL CORRIGIDO)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
-
-    /* Geral */
     .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
     
-    /* Sidebar (SEMPRE AZUL ESCURO/PRETO) */
+    /* Sidebar */
     section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(0,0,0,0.1); }}
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: #FFFFFF !important; }}
     
-    /* Tipografia */
+    /* Headers */
     h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
     p, label {{ color: {P['text']}; }}
-
+    
     /* Inputs */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
-        background-color: {P['input_bg']};
-        color: {P['input_text']};
-        border: 1px solid {P['border']};
-        border-radius: 8px;
+        background-color: {P['input_bg']}; color: {P['input_text']}; border: 1px solid {P['border']}; border-radius: 8px;
     }}
-    div[data-baseweb="select"] > div {{
-        background-color: {P['input_bg']};
-        color: {P['input_text']};
-        border-color: {P['border']};
-    }}
+    div[data-baseweb="select"] > div {{ background-color: {P['input_bg']}; color: {P['input_text']}; border-color: {P['border']}; }}
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) --- */
+    /* Botão Primary */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        padding: 0.6rem 1.2rem;
-        border-radius: 6px;
-        font-family: 'Sora', sans-serif;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
+        color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
+        font-family: 'Sora', sans-serif; font-weight: 600; text-transform: uppercase; font-size: 0.85rem;
     }}
-    button[kind="primary"]:hover {{
-        opacity: 0.9;
-        transform: scale(1.02);
-        color: #FFFFFF !important;
-    }}
+    button[kind="primary"]:hover {{ opacity: 0.9; transform: scale(1.02); color: #FFFFFF !important; }}
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
 
-    /* --- BOTÕES DA SIDEBAR (CORREÇÃO V16 - "SAIR") --- */
-    /* Isso força qualquer botão dentro da sidebar a ser branco, ignorando o tema light */
+    /* Botão Sidebar (Sair) */
     section[data-testid="stSidebar"] button {{
-        background-color: transparent !important;
-        border: 1px solid rgba(255,255,255,0.3) !important;
+        background-color: transparent !important; border: 1px solid rgba(255,255,255,0.3) !important;
     }}
-    section[data-testid="stSidebar"] button p {{
-        color: #FFFFFF !important;
-    }}
-    section[data-testid="stSidebar"] button:hover {{
-        border-color: #FFFFFF !important;
-        background-color: rgba(255,255,255,0.1) !important;
-    }}
-
-    /* Botões Normais fora da sidebar */
-    .main button[kind="secondary"] {{
-        background-color: transparent !important;
-        border: 1px solid {P['border']} !important;
-    }}
-    .main button[kind="secondary"] p {{ color: {P['text']} !important; }}
-
+    section[data-testid="stSidebar"] button p {{ color: #FFFFFF !important; }}
+    section[data-testid="stSidebar"] button:hover {{ border-color: #FFFFFF !important; background-color: rgba(255,255,255,0.1) !important; }}
 
     /* Cards */
-    div[data-testid="stMetric"] {{
-        background-color: {P['card']};
-        border: 1px solid {P['border']};
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }}
-    div[data-testid="stMetricValue"] {{
-        color: {C_KHAKI if st.session_state['theme'] == 'dark' else C_ELECTRIC} !important;
-        font-family: 'Sora', sans-serif;
-    }}
+    div[data-testid="stMetric"] {{ background-color: {P['card']}; border: 1px solid {P['border']}; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+    div[data-testid="stMetricValue"] {{ color: {C_KHAKI if st.session_state['theme'] == 'dark' else C_ELECTRIC} !important; font-family: 'Sora', sans-serif; }}
     label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
 
-    /* Login Wrapper */
-    .login-wrapper {{
-        margin-top: 10vh;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }}
+    .login-wrapper {{ margin-top: 10vh; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; display: flex; flex-direction: column; align-items: center; }}
     .login-wrapper div[data-testid="stImage"] {{ margin: 0 auto; }}
-
     #MainMenu, footer, header {{visibility: hidden;}}
     .block-container {{padding-top: 2rem;}}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. LOGIN (LÓGICA BLINDADA)
+# 4. LOGIN
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"): st.image("logo.png", width=width)
     else: st.markdown(f"<h1 style='color:{C_ELECTRIC}; margin:0; font-family:Sora; text-align:center;'>OCTO</h1>", unsafe_allow_html=True)
 
-if 'usuario_logado' not in st.session_state:
-    st.session_state['usuario_logado'] = None
+if 'usuario_logado' not in st.session_state: st.session_state['usuario_logado'] = None
 
 def render_login_screen():
     c1, c2, c3 = st.columns([1, 1, 1])
@@ -190,26 +114,21 @@ def render_login_screen():
         with st.form("login_master"):
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
-            
-            # Botão Primary
             submitted = st.form_submit_button("ACESSAR SISTEMA", use_container_width=True, type="primary")
             
             if submitted:
                 if not email or not senha:
                     st.warning("Preencha todos os campos.")
                 else:
-                    if not supabase:
-                        st.error("Erro interno: Banco desconectado.")
+                    if not supabase: st.error("Erro interno: Banco desconectado.")
                     else:
                         try:
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
                             if res.data:
                                 st.session_state['usuario_logado'] = res.data[0]
                                 st.rerun()
-                            else:
-                                st.error("Credenciais inválidas.")
-                        except:
-                            st.error("Erro de conexão. Verifique sua internet.")
+                            else: st.error("Credenciais inválidas.")
+                        except: st.error("Erro de conexão.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 if not st.session_state['usuario_logado']:
@@ -240,20 +159,18 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    # O CSS vai garantir que esse botão seja legível
     if st.button("SAIR"):
         st.session_state['usuario_logado'] = None
         st.rerun()
 
 # DADOS
 if not supabase: st.stop()
-try:
-    df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
+try: df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
 except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# CLIENTE
+# SELEÇÃO DE CLIENTE
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
@@ -289,13 +206,11 @@ st.divider()
 tot = c_data['total_mensagens']
 sav = round((tot * 1.5) / 60, 1)
 rev = float(c_data['receita_total'] or 0)
-
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("Receita", f"R$ {rev:,.2f}")
 k2.metric("Tempo", f"{sav}h")
 k3.metric("Atendimentos", c_data['total_atendimentos'])
 k4.metric("Status", "Online" if active else "Offline")
-
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ABAS
@@ -308,18 +223,15 @@ with tabs[0]:
         r_p = supabase.table('agendamentos').select('created_at, valor_sinal_registrado, status, servico_id').eq('cliente_id', c_id).execute().data
         r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute().data
         map_pr = {p['id']: p['nome'] for p in r_pr} if r_pr else {}
-
         lista = []
         if r_s:
             for i in r_s: lista.append({'dt': i['created_at'], 'v': i.get('valor_sinal_registrado',0), 'st': i['status'], 'p': map_pr.get(i.get('produto_salao_id'), 'Salão')})
         if r_p:
             for i in r_p: lista.append({'dt': i['created_at'], 'v': i.get('valor_sinal_registrado',0), 'st': i['status'], 'p': map_pr.get(i.get('servico_id'), 'Serviço')})
-        
         if lista:
             df = pd.DataFrame(lista)
             df['dt'] = pd.to_datetime(df['dt'], format='mixed').dt.date
             df = df[df['st'] != 'Cancelado']
-            
             c_g1, c_g2 = st.columns(2)
             with c_g1:
                 st.markdown("##### Receita Diária")
@@ -366,8 +278,7 @@ with tabs[1]:
                     for m in msgs:
                         role = m['role']
                         av = "👤" if role=='user' else "🐙"
-                        with st.chat_message(role, avatar=av):
-                            st.write(m['content'])
+                        with st.chat_message(role, avatar=av): st.write(m['content'])
             except: pass
 
 # 3. PRODUTOS
@@ -412,7 +323,7 @@ with tabs[3]:
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (COM ÁUDIO E VOZ + GUIA)
+# 5. CÉREBRO (SEGURANÇA REFORÇADA: TEXT_AREA + CONTROLES)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -420,7 +331,9 @@ if perfil == 'admin' and len(tabs) > 4:
             res = supabase.table('clientes').select('config_fluxo, prompt_full').eq('id', c_id).execute()
             if res.data:
                 d = res.data[0]
-                curr_c = d.get('config_fluxo')
+                
+                # Leitura Segura do JSONB
+                curr_c = d.get('config_fluxo') or {}
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
                 # --- COLUNA 1: PROMPT ---
@@ -431,41 +344,60 @@ if perfil == 'admin' and len(tabs) > 4:
 
                 # --- COLUNA 2: ÁUDIO E VOZ ---
                 with c_p2:
-                    st.markdown("##### 2. Áudio e Voz") # Título novo
+                    st.markdown("##### 2. Áudio e Voz")
                     
-                    # Voz
                     vozes = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
                     v_atual = curr_c.get('openai_voice', 'alloy')
                     if v_atual not in vozes: v_atual = 'alloy'
+                    
                     nova_voz = st.selectbox("Voz da IA:", vozes, index=vozes.index(v_atual))
                     
-                    # Temperatura (Slider)
-                    temp_atual = float(curr_c.get('temperature', 0.7))
+                    temp_atual = float(curr_c.get('temperature', 0.5))
                     nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
-                    st.caption("0.0 = Robótica | 1.0 = Humanizada")
-
-                    # GUIA DE VOZES NO EXPANDER
-                    with st.expander("🗣️ Entenda os tipos de Voz"):
+                    
+                    with st.expander("🗣️ Guia de Vozes"):
                         st.markdown("""
-                        * **Alloy:** ⚪ Neutra e equilibrada (Padrão).
-                        * **Echo:** 🔵 Masculina, suave e acolhedora.
-                        * **Onyx:** ⚫ Masculina, grave e séria.
-                        * **Nova:** 🟠 Feminina, alegre e energética (Ideal para Vendas).
-                        * **Shimmer:** ✨ Feminina, sofisticada e calma.
-                        * **Fable:** 🧙‍♂️ Narrativa e expressiva.
+                        - **Alloy:** Neutra/Padrão
+                        - **Echo:** Masculina/Suave
+                        - **Onyx:** Masculina/Grave
+                        - **Nova:** Feminina/Alegre
+                        - **Shimmer:** Feminina/Sofisticada
                         """)
 
-                # --- JSON COMPLETO ---
-                st.markdown("##### 3. Configuração Técnica (JSON Completo)")
-                curr_c['openai_voice'] = nova_voz
-                curr_c['temperature'] = nova_temp
+                # --- COLUNA 3: JSON TÉCNICO (TEXTO PURO = ZERO BUG) ---
+                st.markdown("##### 3. Configuração Técnica (JSON)")
+                st.caption("⚠️ Edite com cuidado. Mantenha as aspas.")
                 
-                new_c = st.data_editor(curr_c, use_container_width=True, height=400)
+                # Removemos as chaves de voz/temp do visualizador para não confundir
+                # Elas serão reinseridas na hora de salvar
+                view_json = curr_c.copy()
+                if 'openai_voice' in view_json: del view_json['openai_voice']
+                if 'temperature' in view_json: del view_json['temperature']
                 
-                if st.button("SALVAR TUDO", type="primary"):
-                    new_c['openai_voice'] = nova_voz
-                    new_c['temperature'] = nova_temp
-                    supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
-                    st.success("Cérebro Atualizado com Sucesso!")
-        except Exception as e: st.error(f"Erro: {e}")
+                # Usamos text_area: Impossível o erro de "arrastar tabela" acontecer aqui
+                json_str = st.text_area("", value=json.dumps(view_json, indent=4, ensure_ascii=False), height=300)
+                
+                if st.button("SALVAR CÉREBRO", type="primary"):
+                    try:
+                        # 1. Lê o texto e transforma em dict
+                        final_json = json.loads(json_str)
+                        
+                        # 2. Injeta os valores dos controles visuais
+                        final_json['openai_voice'] = nova_voz
+                        final_json['temperature'] = nova_temp
+                        
+                        # 3. Salva no banco (dict -> jsonb automático)
+                        supabase.table('clientes').update({
+                            'config_fluxo': final_json,
+                            'prompt_full': new_p
+                        }).eq('id', c_id).execute()
+                        
+                        st.success("Cérebro Atualizado com Sucesso!")
+                        time.sleep(1)
+                        st.rerun()
+                    except json.JSONDecodeError:
+                        st.error("Erro: O JSON está inválido. Verifique vírgulas e chaves.")
+                    except Exception as e:
+                        st.error(f"Erro ao salvar: {e}")
 
+        except Exception as e: st.error(f"Erro: {e}")
