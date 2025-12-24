@@ -33,7 +33,6 @@ PALETAS = {
         'border': C_ELECTRIC,
         'input_bg': '#0B1221',
         'input_text': C_WHITE,
-        'btn_sec_text': C_WHITE, # Texto do botão secundário no dark
         'chart_template': 'plotly_dark'
     },
     'light': {
@@ -44,7 +43,6 @@ PALETAS = {
         'border': '#D1D5DB',
         'input_bg': '#FFFFFF',
         'input_text': C_DARK_TEXT,
-        'btn_sec_text': C_DARK_TEXT, # Texto do botão secundário no light
         'chart_template': 'plotly_white'
     }
 }
@@ -67,7 +65,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (CORRIGIDO PARA O BOTÃO SAIR E LOGIN)
+# 3. CSS (CORREÇÕES ESPECÍFICAS DE SIDEBAR E LOGIN)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -76,7 +74,7 @@ st.markdown(f"""
     /* Geral */
     .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
     
-    /* Sidebar */
+    /* Sidebar (SEMPRE AZUL ESCURO/PRETO) */
     section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(0,0,0,0.1); }}
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: #FFFFFF !important; }}
     
@@ -99,7 +97,7 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) - ROXO FORÇADO --- */
+    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) --- */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important;
@@ -115,24 +113,30 @@ st.markdown(f"""
         opacity: 0.9;
         transform: scale(1.02);
         color: #FFFFFF !important;
-        box-shadow: 0 4px 12px rgba(63, 0, 255, 0.3);
     }}
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
 
-    /* --- BOTÃO SECONDARY (SAIR/PAUSAR) - CORREÇÃO DE COR --- */
-    button[kind="secondary"] {{
+    /* --- BOTÕES DA SIDEBAR (CORREÇÃO V16 - "SAIR") --- */
+    /* Isso força qualquer botão dentro da sidebar a ser branco, ignorando o tema light */
+    section[data-testid="stSidebar"] button {{
+        background-color: transparent !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+    }}
+    section[data-testid="stSidebar"] button p {{
+        color: #FFFFFF !important;
+    }}
+    section[data-testid="stSidebar"] button:hover {{
+        border-color: #FFFFFF !important;
+        background-color: rgba(255,255,255,0.1) !important;
+    }}
+
+    /* Botões Normais fora da sidebar */
+    .main button[kind="secondary"] {{
         background-color: transparent !important;
         border: 1px solid {P['border']} !important;
     }}
-    /* Força a cor do texto baseada no tema */
-    button[kind="secondary"] p {{
-        color: {P['btn_sec_text']} !important;
-    }}
-    /* Hover do secundário */
-    button[kind="secondary"]:hover {{
-        border-color: {C_ELECTRIC} !important;
-        background-color: rgba(63, 0, 255, 0.1) !important;
-    }}
+    .main button[kind="secondary"] p {{ color: {P['text']} !important; }}
+
 
     /* Cards */
     div[data-testid="stMetric"] {{
@@ -167,7 +171,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. LOGIN (LÓGICA APERTADA)
+# 4. LOGIN (LÓGICA BLINDADA)
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"): st.image("logo.png", width=width)
@@ -236,8 +240,8 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    # Botão SAIR tipo secondary (agora com cor corrigida)
-    if st.button("SAIR", type="secondary"):
+    # O CSS vai garantir que esse botão seja legível
+    if st.button("SAIR"):
         st.session_state['usuario_logado'] = None
         st.rerun()
 
@@ -249,12 +253,11 @@ except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# CLIENTE (PERSISTÊNCIA)
+# CLIENTE
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
     if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
-    
     idx = list(lista).index(st.session_state['last_cli'])
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
     st.session_state['last_cli'] = sel
@@ -409,7 +412,7 @@ with tabs[3]:
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (COM TEMPERATURA E VOZ)
+# 5. CÉREBRO (COM ÁUDIO E VOZ + GUIA)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -426,9 +429,9 @@ if perfil == 'admin' and len(tabs) > 4:
                     st.markdown("##### 1. Personalidade (Prompt)")
                     new_p = st.text_area("", value=d.get('prompt_full','') or '', height=350)
 
-                # --- COLUNA 2: CONTROLES ---
+                # --- COLUNA 2: ÁUDIO E VOZ ---
                 with c_p2:
-                    st.markdown("##### 2. Ajustes Finos")
+                    st.markdown("##### 2. Áudio e Voz") # Título novo
                     
                     # Voz
                     vozes = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
@@ -436,15 +439,20 @@ if perfil == 'admin' and len(tabs) > 4:
                     if v_atual not in vozes: v_atual = 'alloy'
                     nova_voz = st.selectbox("Voz da IA:", vozes, index=vozes.index(v_atual))
                     
-                    # Temperatura (Slider) - 0.0 a 1.0
+                    # Temperatura (Slider)
                     temp_atual = float(curr_c.get('temperature', 0.7))
                     nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
-                    st.caption("0.0 = Robótica/Precisa | 1.0 = Criativa/Solta")
+                    st.caption("0.0 = Precisa | 1.0 = Criativa")
 
-                    with st.expander("ℹ️ Dicas"):
+                    # GUIA DE VOZES NO EXPANDER
+                    with st.expander("🗣️ Entenda os tipos de Voz"):
                         st.markdown("""
-                        - **Voz:** Escolha o timbre para os áudios.
-                        - **Temperatura:** Quanto maior, mais a IA 'inventa' e varia as frases. Para agendamentos, use 0.5 a 0.7.
+                        * **Alloy:** ⚪ Neutra e equilibrada (Padrão).
+                        * **Echo:** 🔵 Masculina, suave e acolhedora.
+                        * **Onyx:** ⚫ Masculina, grave e séria.
+                        * **Nova:** 🟠 Feminina, alegre e energética (Ideal para Vendas).
+                        * **Shimmer:** ✨ Feminina, sofisticada e calma.
+                        * **Fable:** 🧙‍♂️ Narrativa e expressiva.
                         """)
 
                 # --- JSON COMPLETO ---
@@ -454,7 +462,7 @@ if perfil == 'admin' and len(tabs) > 4:
                 
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
-                if st.button("SALVAR CÉREBRO", type="primary"):
+                if st.button("SALVAR TUDO", type="primary"):
                     new_c['openai_voice'] = nova_voz
                     new_c['temperature'] = nova_temp
                     supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
