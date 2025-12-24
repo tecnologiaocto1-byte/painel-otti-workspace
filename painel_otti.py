@@ -20,7 +20,6 @@ C_CORNFLOWER  = "#5396FF"
 C_KHAKI       = "#E7F9A9"
 C_WHITE       = "#F8FAFC"
 
-# Gerenciamento de Estado do Tema
 if 'theme' not in st.session_state:
     st.session_state['theme'] = 'dark'
 
@@ -65,7 +64,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (VISUAL & FIX DE BOTÕES)
+# 3. CSS BLINDADO (RECUPERADO DA VERSÃO QUE FUNCIONAVA)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -83,6 +82,7 @@ st.markdown(f"""
         background-color: {P['sidebar']};
         border-right: 1px solid rgba(0,0,0,0.1);
     }}
+    /* Força texto branco na sidebar independente do tema (para contraste no azul) */
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{
         color: #FFFFFF !important;
     }}
@@ -95,7 +95,7 @@ st.markdown(f"""
     }}
     p, label {{ color: {P['text']}; }}
 
-    /* Inputs & Selects */
+    /* Inputs & Selects (CORREÇÃO DE LEGIBILIDADE) */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']};
         color: {P['input_text']};
@@ -110,7 +110,7 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* BOTÃO PRIMARY (LOGIN/SALVAR) */
+    /* BOTÕES (CORREÇÃO DA COR BRANCA) */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important;
@@ -128,7 +128,17 @@ st.markdown(f"""
         transform: scale(1.02);
         color: #FFFFFF !important;
     }}
+    /* Garante que o texto dentro do botão seja branco */
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
+    
+    /* Botão Secundário (Sair/Pausar) */
+    button[kind="secondary"] {{
+        background-color: transparent !important;
+        border: 1px solid {P['border']} !important;
+    }}
+    button[kind="secondary"] p {{
+        color: {P['text']} !important;
+    }}
 
     /* Cards KPI */
     div[data-testid="stMetric"] {{
@@ -147,7 +157,7 @@ st.markdown(f"""
         opacity: 0.8;
     }}
 
-    /* Login Wrapper */
+    /* Login Wrapper Centralizado */
     .login-wrapper {{
         margin-top: 10vh;
         max-width: 400px;
@@ -166,7 +176,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. FUNÇÃO DE LOGIN
+# 4. FUNÇÃO DE LOGIN (LÓGICA BLINDADA DO V12)
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"):
@@ -184,11 +194,12 @@ def render_login_screen():
         render_logo(width=120)
         st.markdown(f"<h3 style='margin-bottom:30px; color:{P['text']}; text-align:center;'>Otti Workspace</h3>", unsafe_allow_html=True)
         
+        # FORM = Enter funciona
         with st.form("login_master"):
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
             
-            # Botão Primary para garantir cor e submit no Enter
+            # PRIMARY = CSS Roxo funciona
             submitted = st.form_submit_button("ACESSAR SISTEMA", use_container_width=True, type="primary")
             
             if submitted:
@@ -202,7 +213,7 @@ def render_login_screen():
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
                             if res.data:
                                 st.session_state['usuario_logado'] = res.data[0]
-                                st.rerun()
+                                st.rerun() # ATUALIZA NA HORA
                             else:
                                 st.error("Credenciais inválidas.")
                         except:
@@ -238,11 +249,11 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    if st.button("SAIR"):
+    if st.button("SAIR", type="secondary"):
         st.session_state['usuario_logado'] = None
         st.rerun()
 
-# --- CARREGAMENTO DE DADOS ---
+# --- DADOS ---
 if not supabase: st.stop()
 try:
     df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
@@ -250,22 +261,18 @@ except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# --- SELEÇÃO DE CLIENTE COM MEMÓRIA ---
+# --- SELEÇÃO DE CLIENTE (PERSISTÊNCIA CORRIGIDA) ---
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     
-    # Inicializa memória se não existir
-    if 'last_cli' not in st.session_state:
-        st.session_state['last_cli'] = lista[0]
-    
-    # Valida se o salvo ainda existe
-    if st.session_state['last_cli'] not in lista:
-        st.session_state['last_cli'] = lista[0]
+    # Lógica de memória para não resetar
+    if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
+    if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
         
     idx = list(lista).index(st.session_state['last_cli'])
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
     
-    # Salva seleção
+    # Atualiza memória
     st.session_state['last_cli'] = sel
     
     c_data = df_kpis[df_kpis['nome_empresa'] == sel].iloc[0]
@@ -308,7 +315,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # --- ABAS ---
 tabs = st.tabs(["Analytics", "Espião", "Produtos", "Agenda", "Cérebro"])
 
-# 1. ANALYTICS
+# 1. ANALYTICS (NEON)
 with tabs[0]:
     try:
         r_s = supabase.table('agendamentos_salao').select('created_at, valor_sinal_registrado, status, produto_salao_id').eq('cliente_id', c_id).execute().data
@@ -398,18 +405,17 @@ with tabs[2]:
                 supabase.table('produtos').insert({"cliente_id": c_id, "nome": n, "categoria": c, "ativo": True, "regras_preco": json.dumps(js)}).execute()
                 st.rerun()
 
-# 4. AGENDA
+# 4. AGENDA (LÓGICA DUPLA)
 with tabs[3]:
     st.subheader("Próximos Agendamentos")
-    
-    # Mapa de nomes
     r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute()
     pmap = {p['id']: p['nome'] for p in r_pr.data} if r_pr.data else {}
 
     try:
         df_final = pd.DataFrame()
-        # Busca nas duas tabelas
+        # Tabela Casa do Decorador
         rs = supabase.table('agendamentos_salao').select('data_reserva, valor_total_registrado, cliente_final_waid, produto_salao_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
+        # Tabela Etnia
         rv = supabase.table('agendamentos').select('data_hora_inicio, valor_total_registrado, servico_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
 
         if rs.data:
@@ -437,7 +443,7 @@ if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
         
-        st.info("💡 **Guia Rápido:** Defina aqui como o Otti se comporta. Use a 'Voz da IA' para áudios no WhatsApp.")
+        st.info("💡 **Guia Rápido:** Defina a 'Voz da IA' para os áudios e edite o JSON para configurações técnicas.")
 
         try:
             res = supabase.table('clientes').select('config_fluxo, prompt_full').eq('id', c_id).execute()
