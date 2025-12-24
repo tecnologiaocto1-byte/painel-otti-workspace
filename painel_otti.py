@@ -12,13 +12,13 @@ from datetime import datetime
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
-# --- CORES ---
-C_BG_DARK = "#001024" 
-C_BG_LIGHT = "#F0F2F5"
+# --- DEFINIÇÃO DE PALETAS ---
+C_BG_DARK     = "#001024" 
+C_BG_LIGHT    = "#F0F2F5"
 C_SIDEBAR_DARK = "#020A14"
 C_SIDEBAR_LIGHT = "#031A89"
-C_TEXT_DARK = "#F8FAFC"
-C_TEXT_LIGHT = "#101828"
+C_TEXT_DARK   = "#F8FAFC"
+C_TEXT_LIGHT  = "#101828"
 
 if 'theme' not in st.session_state: st.session_state['theme'] = 'dark'
 
@@ -28,8 +28,8 @@ PALETAS = {
         'sidebar': C_SIDEBAR_DARK,
         'text': C_TEXT_DARK,
         'card': "rgba(3, 26, 137, 0.2)",
-        'input_bg': "#0B1221",
-        'input_text': "#FFFFFF", # Texto Branco no Input Escuro
+        'input_bg': "#0B1221", # Fundo escuro para inputs e botões secundários
+        'input_text': "#FFFFFF",
         'metric_val': "#E7F9A9",
         'chart_template': 'plotly_dark'
     },
@@ -38,8 +38,8 @@ PALETAS = {
         'sidebar': C_SIDEBAR_LIGHT,
         'text': C_TEXT_LIGHT,
         'card': "#FFFFFF",
-        'input_bg': "#FFFFFF",
-        'input_text': "#000000", # Texto Preto no Input Claro
+        'input_bg': "#FFFFFF", # Fundo branco para inputs e botões secundários
+        'input_text': "#000000",
         'metric_val': "#3F00FF",
         'chart_template': 'plotly_white'
     }
@@ -61,104 +61,71 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (FORÇA BRUTA)
+# 3. CSS (BOTÃO PAUSAR CORRIGIDO)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
 
-    /* Força Fundo Geral */
-    .stApp, div[data-testid="stAppViewContainer"] {{
-        background-color: {P['bg']} !important;
-        color: {P['text']} !important;
-        font-family: 'Inter', sans-serif;
-    }}
+    .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
     
-    /* Força Sidebar */
-    section[data-testid="stSidebar"] {{
-        background-color: {P['sidebar']} !important;
-        border-right: 1px solid rgba(255,255,255,0.1);
-    }}
-    /* Texto da Sidebar SEMPRE Branco */
-    section[data-testid="stSidebar"] * {{
-        color: #FFFFFF !important;
-    }}
+    /* --- SIDEBAR --- */
+    section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(255,255,255,0.1); }}
+    section[data-testid="stSidebar"] p, 
+    section[data-testid="stSidebar"] span, 
+    section[data-testid="stSidebar"] div, 
+    section[data-testid="stSidebar"] label {{ color: #FFFFFF !important; }}
 
-    /* Tipografia */
-    h1, h2, h3, h4, p, label, span {{
-        color: {P['text']};
-        font-family: 'Sora', sans-serif;
-    }}
-    
-    /* --- INPUTS & SELECTBOX (CORRIGIDO NA MARRA) --- */
-    .stTextInput input, .stTextArea textarea {{
+    h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
+    p, label {{ color: {P['text']} !important; }}
+
+    /* --- INPUTS & SELECTBOX --- */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']} !important;
         color: {P['input_text']} !important;
-        border: 1px solid #3F00FF !important;
+        border: 1px solid #3F00FF;
+        border-radius: 8px;
     }}
-    
-    /* Selectbox Container */
     div[data-baseweb="select"] > div {{
         background-color: {P['input_bg']} !important;
+        color: {P['input_text']} !important;
         border-color: #3F00FF !important;
     }}
-    
-    /* O TEXTO DENTRO DO SELECTBOX (O que você disse que sumiu) */
-    div[data-baseweb="select"] div {{
-        color: {P['input_text']} !important;
-    }}
-    
-    /* Menu Dropdown (Opções) */
-    div[data-baseweb="popover"], div[data-baseweb="menu"] {{
-        background-color: {P['input_bg']} !important;
-    }}
-    div[data-baseweb="option"] {{
-        color: {P['input_text']} !important;
-    }}
+    div[data-baseweb="select"] span {{ color: {P['input_text']} !important; }}
+    div[data-baseweb="popover"] {{ background-color: {P['input_bg']} !important; }}
+    div[data-baseweb="option"] {{ color: {P['input_text']} !important; }}
 
-    /* --- BOTÕES --- */
-    
-    /* Botão Primário (Salvar/Login) */
+    /* --- BOTÃO PRIMARY (LOGIN/SALVAR) --- */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
-        color: #FFFFFF !important;
-        border: none !important;
+        color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
     }}
 
-    /* Botão Secundário (PAUSAR) - FORA da Sidebar */
-    div[data-testid="stAppViewContainer"] .main button[kind="secondary"] {{
+    /* --- BOTÃO SECUNDÁRIO (PAUSAR/ATIVAR) - CORRIGIDO --- */
+    /* Agora ele pega a cor de fundo do input (Escuro no Dark, Branco no Light) */
+    .main .stButton button {{
         background-color: {P['input_bg']} !important;
         color: {P['text']} !important;
         border: 1px solid #3F00FF !important;
     }}
-    
-    /* Botão da Sidebar (SAIR) - Forçado Branco */
+    .main .stButton button:hover {{
+        border-color: #E7F9A9 !important;
+        color: #3F00FF !important;
+    }}
+
+    /* --- BOTÃO SIDEBAR (SAIR) --- */
     section[data-testid="stSidebar"] button {{
-        background-color: transparent !important;
-        border: 1px solid rgba(255,255,255,0.5) !important;
+        background-color: transparent !important; border: 1px solid rgba(255,255,255,0.5) !important;
     }}
-    section[data-testid="stSidebar"] button * {{
-        color: #FFFFFF !important;
-    }}
+    section[data-testid="stSidebar"] button p {{ color: #FFFFFF !important; }}
 
-    /* Cards KPI */
-    div[data-testid="stMetric"] {{
-        background-color: {P['card']} !important;
-        border: 1px solid #3F00FF !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }}
-    div[data-testid="stMetricValue"] {{
-        color: {P['metric_val']} !important;
-    }}
-    div[data-testid="stMetricLabel"] {{
-        color: {P['text']} !important;
-        opacity: 0.8;
-    }}
+    /* Cards */
+    div[data-testid="stMetric"] {{ background-color: {P['card']}; border: 1px solid #3F00FF; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+    div[data-testid="stMetricValue"] {{ color: {P['metric_val']} !important; font-family: 'Sora', sans-serif; }}
+    label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
 
-    /* Login Wrapper */
     .login-wrapper {{ margin-top: 10vh; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; }}
     .login-wrapper div[data-testid="stImage"] {{ margin: 0 auto; display: block; }}
-    
     #MainMenu, footer, header {{visibility: hidden;}}
     .block-container {{padding-top: 2rem;}}
 </style>
@@ -188,7 +155,7 @@ def render_login_screen():
             if submitted:
                 if not email or not senha: st.warning("Preencha todos os campos.")
                 else:
-                    if not supabase: st.error("Erro interno: Banco desconectado.")
+                    if not supabase: st.error("Erro interno.")
                     else:
                         try:
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
@@ -260,7 +227,6 @@ with c1:
 with c2:
     st.markdown("<br>", unsafe_allow_html=True)
     lbl = "⏸️ PAUSAR" if active else "▶️ ATIVAR"
-    # Este botão agora obedece a regra de .main button[kind="secondary"]
     if st.button(lbl, use_container_width=True):
         supabase.table('clientes').update({'bot_pausado': active}).eq('id', c_id).execute()
         st.rerun()
@@ -424,6 +390,8 @@ if perfil == 'admin' and len(tabs) > 4:
                         """)
 
                 st.markdown("##### 3. Configuração Técnica (Tabela)")
+                
+                # DATA_EDITOR COM JSON SANITIZADO
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
                 if st.button("SALVAR TUDO", type="primary"):
