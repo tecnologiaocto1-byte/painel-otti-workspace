@@ -12,38 +12,38 @@ from datetime import datetime
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
-# --- DEFINIÇÃO DE PALETAS INTELIGENTES ---
-# O erro antes era forçar cor fixa. Agora é dinâmico.
+# --- DEFINIÇÃO DE PALETAS ---
+C_BG_DARK     = "#001024" 
+C_BG_LIGHT    = "#F0F2F5"
+C_SIDEBAR_DARK = "#020A14"
+C_SIDEBAR_LIGHT = "#031A89" # Azul Octo na Sidebar do modo claro
+C_TEXT_DARK   = "#F8FAFC"
+C_TEXT_LIGHT  = "#101828"
+
+if 'theme' not in st.session_state: st.session_state['theme'] = 'dark'
 
 PALETAS = {
     'dark': {
-        'bg': "#001024",           # Azul Octo
-        'sidebar': "#020A14",      # Sidebar Preta
-        'text': "#F8FAFC",         # Texto Branco
+        'bg': C_BG_DARK,
+        'sidebar': C_SIDEBAR_DARK,
+        'text': C_TEXT_DARK,
         'card': "rgba(3, 26, 137, 0.2)",
-        'border': "#3F00FF",
         'input_bg': "#0B1221",
-        'input_text': "#FFFFFF",
-        'metric_val': "#E7F9A9",   # Verde Neon (Lindo no escuro)
+        'input_text': "#FFFFFF", # Texto Branco no Input Escuro
+        'metric_val': "#E7F9A9",
         'chart_template': 'plotly_dark'
     },
     'light': {
-        'bg': "#F0F2F5",           # Cinza Claro
-        'sidebar': "#031A89",      # Sidebar Azul Octo (Pra dar contraste)
-        'text': "#101828",         # Texto Preto/Cinza Escuro (LEGÍVEL)
+        'bg': C_BG_LIGHT,
+        'sidebar': C_SIDEBAR_LIGHT,
+        'text': C_TEXT_LIGHT,
         'card': "#FFFFFF",
-        'border': "#D1D5DB",
         'input_bg': "#FFFFFF",
-        'input_text': "#000000",   # Texto Preto no Input
-        'metric_val': "#3F00FF",   # Roxo (Legível no claro, nada de verde)
+        'input_text': "#000000", # Texto Preto no Input Claro
+        'metric_val': "#3F00FF",
         'chart_template': 'plotly_white'
     }
 }
-
-# Gestão de Estado do Tema
-if 'theme' not in st.session_state:
-    st.session_state['theme'] = 'dark'
-
 P = PALETAS[st.session_state['theme']]
 
 # ==============================================================================
@@ -61,69 +61,69 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (AGORA RESPEITANDO O TEMA)
+# 3. CSS (CORREÇÃO DO SELECTBOX)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
 
-    /* Fundo Geral */
     .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
     
-    /* Sidebar */
+    /* --- SIDEBAR --- */
     section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(255,255,255,0.1); }}
+    
+    /* CORREÇÃO AQUI: Específico para textos, NÃO para divs genéricos (que quebravam o selectbox) */
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3, 
     section[data-testid="stSidebar"] p, 
-    section[data-testid="stSidebar"] span, 
-    section[data-testid="stSidebar"] div,
-    section[data-testid="stSidebar"] label {{ color: #FFFFFF !important; }} /* Sidebar sempre texto branco pois o fundo é escuro/azul */
+    section[data-testid="stSidebar"] label, 
+    section[data-testid="stSidebar"] span {{ 
+        color: #FFFFFF !important; 
+    }}
 
-    /* Tipografia */
+    /* Tipografia Geral */
     h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
     p, label {{ color: {P['text']} !important; }}
 
-    /* Inputs e Selects (AQUI ESTAVA O ERRO DO TEXTO SUMIR) */
+    /* --- INPUTS & SELECTBOX --- */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']} !important;
         color: {P['input_text']} !important;
-        border: 1px solid {P['border']};
+        border: 1px solid #3F00FF;
         border-radius: 8px;
     }}
     
-    /* Selectbox (Menu Cliente) */
+    /* AQUI O NOME DO CLIENTE VAI APARECER */
     div[data-baseweb="select"] > div {{
         background-color: {P['input_bg']} !important;
-        color: {P['input_text']} !important;
-        border-color: {P['border']} !important;
+        color: {P['input_text']} !important; /* Preto no claro, Branco no escuro */
+        border-color: #3F00FF !important;
     }}
-    div[data-baseweb="select"] span {{ color: {P['input_text']} !important; }}
+    /* Garante que o texto selecionado tenha a cor certa */
+    div[data-baseweb="select"] div {{
+        color: {P['input_text']} !important; 
+    }}
     div[data-baseweb="popover"] {{ background-color: {P['input_bg']} !important; }}
     div[data-baseweb="option"] {{ color: {P['input_text']} !important; }}
 
-    /* Botão Primary */
+    /* Botões */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
-        font-family: 'Sora', sans-serif; font-weight: 600; text-transform: uppercase; font-size: 0.85rem;
     }}
-    button[kind="primary"]:hover {{ opacity: 0.9; transform: scale(1.02); }}
-    button[kind="primary"] p {{ color: #FFFFFF !important; }}
-
-    /* Botão Sair (Sidebar) */
     section[data-testid="stSidebar"] button {{
         background-color: transparent !important; border: 1px solid rgba(255,255,255,0.5) !important;
     }}
     section[data-testid="stSidebar"] button p {{ color: #FFFFFF !important; }}
-    section[data-testid="stSidebar"] button:hover {{ border-color: #FFFFFF !important; background-color: rgba(255,255,255,0.1) !important; }}
 
-    /* Cards KPI */
-    div[data-testid="stMetric"] {{ background-color: {P['card']}; border: 1px solid {P['border']}; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
-    div[data-testid="stMetricValue"] {{ color: {P['metric_val']} !important; font-family: 'Sora', sans-serif; }} /* COR CORRIGIDA */
+    /* Cards */
+    div[data-testid="stMetric"] {{ background-color: {P['card']}; border: 1px solid #3F00FF; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
+    div[data-testid="stMetricValue"] {{ color: {P['metric_val']} !important; font-family: 'Sora', sans-serif; }}
     label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
 
-    /* Login */
     .login-wrapper {{ margin-top: 10vh; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; }}
     .login-wrapper div[data-testid="stImage"] {{ margin: 0 auto; display: block; }}
-    
     #MainMenu, footer, header {{visibility: hidden;}}
     .block-container {{padding-top: 2rem;}}
 </style>
@@ -153,7 +153,7 @@ def render_login_screen():
             if submitted:
                 if not email or not senha: st.warning("Preencha todos os campos.")
                 else:
-                    if not supabase: st.error("Erro interno: Banco desconectado.")
+                    if not supabase: st.error("Erro interno.")
                     else:
                         try:
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
@@ -181,7 +181,6 @@ with st.sidebar:
     st.markdown("---")
     st.write(f"Olá, **{user['nome_usuario']}**")
     
-    # Toggle REAL que muda o st.session_state
     dark_on = (st.session_state['theme'] == 'dark')
     if st.toggle("🌙 Modo Escuro", value=dark_on):
         if st.session_state['theme'] != 'dark':
@@ -208,7 +207,6 @@ if perfil == 'admin':
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
     if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
     idx = list(lista).index(st.session_state['last_cli'])
-    # Selectbox agora tem CSS corrigido pra não sumir texto
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
     st.session_state['last_cli'] = sel
     c_data = df_kpis[df_kpis['nome_empresa'] == sel].iloc[0]
@@ -344,7 +342,7 @@ with tabs[3]:
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (TABELA + VÍRGULA + LEGENDA)
+# 5. CÉREBRO
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -355,14 +353,13 @@ if perfil == 'admin' and len(tabs) > 4:
                 curr_c = d.get('config_fluxo') or {}
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
-                # TRATAMENTO DE ERRO '0,8'
+                # Tratamento de erro 0,8
                 raw_temp = curr_c.get('temperature', 0.5)
                 if isinstance(raw_temp, str):
                     try:
                         raw_temp = raw_temp.replace(',', '.')
                         curr_c['temperature'] = float(raw_temp)
-                    except:
-                        curr_c['temperature'] = 0.5
+                    except: curr_c['temperature'] = 0.5
 
                 c_p1, c_p2 = st.columns([2, 1])
                 with c_p1:
@@ -379,11 +376,11 @@ if perfil == 'admin' and len(tabs) > 4:
                     
                     temp_atual = float(curr_c.get('temperature', 0.5))
                     nova_temp = st.slider("Criatividade da Resposta:", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
-                    st.caption("0.0 = Mais Robótico | 1.0 = Mais Criativo") # LEGENDA!
+                    st.caption("0.0 = Mais Robótico | 1.0 = Mais Criativo")
                     
                     with st.expander("🗣️ Guia de Vozes"):
                         st.markdown("""
-                        - **Alloy:** Neutra
+                        - **Alloy:** Neutra/Padrão
                         - **Echo:** Masculina/Suave
                         - **Onyx:** Masculina/Grave
                         - **Nova:** Feminina/Alegre
@@ -392,12 +389,11 @@ if perfil == 'admin' and len(tabs) > 4:
 
                 st.markdown("##### 3. Configuração Técnica (Tabela)")
                 
-                # DATA_EDITOR DE VOLTA
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
                 if st.button("SALVAR TUDO", type="primary"):
                     new_c['openai_voice'] = nova_voz
-                    new_c['temperature'] = nova_temp # Salva float puro (0.8)
+                    new_c['temperature'] = nova_temp 
                     
                     supabase.table('clientes').update({
                         'config_fluxo': json.dumps(new_c),
