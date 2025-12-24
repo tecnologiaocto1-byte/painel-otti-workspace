@@ -44,7 +44,7 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (MOBILE FRIENDLY V22)
+# 3. CSS BLINDADO (BOTÕES E LOGIN)
 # ==============================================================================
 st.markdown(f"""
 <style>
@@ -67,48 +67,29 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* Botão Primário */
+    /* Botão Primário (Login/Salvar) - Roxo Degradê */
     button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
         font-family: 'Sora', sans-serif; font-weight: 600; text-transform: uppercase; font-size: 0.85rem;
     }}
-    button[kind="primary"]:hover {{ opacity: 0.9; transform: scale(1.02); }}
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
+    button[kind="primary"]:hover {{ opacity: 0.9; transform: scale(1.02); box-shadow: 0 4px 12px rgba(63, 0, 255, 0.4); }}
 
-    /* Botão Sair (Sidebar) */
+    /* Botão Sair (Sidebar) - Forçar Branco */
     section[data-testid="stSidebar"] button {{
-        background-color: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important;
+        background-color: transparent !important; 
+        border: 1px solid rgba(255,255,255,0.4) !important;
     }}
     section[data-testid="stSidebar"] button p {{ color: #FFFFFF !important; }}
+    section[data-testid="stSidebar"] button:hover {{ border-color: #FFFFFF !important; background-color: rgba(255,255,255,0.1) !important; }}
 
-    /* Cards */
-    div[data-testid="stMetric"] {{ background-color: {P['card']}; border: 1px solid {P['border']}; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }}
-    div[data-testid="stMetricValue"] {{ color: {C_KHAKI if st.session_state['theme'] == 'dark' else C_ELECTRIC} !important; font-family: 'Sora', sans-serif; }}
-    label[data-testid="stMetricLabel"] {{ color: {P['text']} !important; opacity: 0.8; }}
-
-    /* LOGIN (Desktop Default) */
+    /* Login Wrapper */
     .login-wrapper {{ margin-top: 10vh; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; }}
     .login-wrapper div[data-testid="stImage"] {{ margin: 0 auto; display: block; }}
     
-    /* --- 📱 MOBILE OPTIMIZATION --- */
-    @media only screen and (max-width: 600px) {{
-        /* Login ocupa a tela toda no celular */
-        .login-wrapper {{ margin-top: 5vh; max-width: 90% !important; }}
-        
-        /* Remove padding excessivo do topo */
-        .block-container {{ padding-top: 2rem !important; padding-left: 1rem !important; padding-right: 1rem !important; }}
-        
-        /* Ajusta tamanho dos títulos */
-        h1 {{ font-size: 1.8rem !important; }}
-        h3 {{ font-size: 1.3rem !important; }}
-        
-        /* Cards KPI empilhados com margem */
-        div[data-testid="stMetric"] {{ margin-bottom: 10px; }}
-        
-        /* Botões mais fáceis de tocar */
-        button {{ min-height: 45px !important; }}
-    }}
+    #MainMenu, footer, header {{visibility: hidden;}}
+    .block-container {{padding-top: 2rem;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -128,6 +109,7 @@ def render_login_screen():
         render_logo(width=120)
         st.markdown(f"<h3 style='margin-bottom:30px; color:{P['text']}; text-align:center;'>Otti Workspace</h3>", unsafe_allow_html=True)
         
+        # Form garante que Enter funcione
         with st.form("login_master"):
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
@@ -201,6 +183,7 @@ else:
 c_id = int(c_data['cliente_id'])
 active = not bool(c_data['bot_pausado'])
 
+# HEADER
 c1, c2 = st.columns([3, 1])
 with c1:
     st.title(c_data['nome_empresa'])
@@ -215,7 +198,6 @@ with c2:
 
 st.divider()
 
-# KPIs (Mobile: vão empilhar 1 por 1 ou 2 por 2 dependendo da largura)
 tot = c_data['total_mensagens']
 sav = round((tot * 1.5) / 60, 1)
 rev = float(c_data['receita_total'] or 0)
@@ -226,8 +208,10 @@ k3.metric("Atendimentos", c_data['total_atendimentos'])
 k4.metric("Status", "Online" if active else "Offline")
 st.markdown("<br>", unsafe_allow_html=True)
 
+# ABAS
 tabs = st.tabs(["Analytics", "Espião", "Produtos", "Agenda", "Cérebro"])
 
+# 1. ANALYTICS
 with tabs[0]:
     try:
         r_s = supabase.table('agendamentos_salao').select('created_at, valor_sinal_registrado, status, produto_salao_id').eq('cliente_id', c_id).execute().data
@@ -261,6 +245,7 @@ with tabs[0]:
         else: st.info("Sem dados.")
     except Exception as e: st.error(f"Erro Visual: {e}")
 
+# 2. ESPIÃO
 with tabs[1]:
     cl, cr = st.columns([1, 2])
     with cl:
@@ -291,6 +276,7 @@ with tabs[1]:
                         with st.chat_message(role, avatar=av): st.write(m['content'])
             except: pass
 
+# 3. PRODUTOS
 with tabs[2]:
     c1, c2 = st.columns([2,1])
     with c1:
@@ -307,6 +293,7 @@ with tabs[2]:
                 supabase.table('produtos').insert({"cliente_id": c_id, "nome": n, "categoria": c, "ativo": True, "regras_preco": json.dumps(js)}).execute()
                 st.rerun()
 
+# 4. AGENDA
 with tabs[3]:
     st.subheader("Próximos Agendamentos")
     r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute()
@@ -331,7 +318,7 @@ with tabs[3]:
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (SEGURANÇA + MOBILE)
+# 5. CÉREBRO (COM TRATAMENTO DE ERRO "0,8")
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -340,14 +327,17 @@ if perfil == 'admin' and len(tabs) > 4:
             if res.data:
                 d = res.data[0]
                 
+                # Leitura Segura do JSONB
                 curr_c = d.get('config_fluxo') or {}
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
+                # --- COLUNA 1: PROMPT ---
                 c_p1, c_p2 = st.columns([2, 1])
                 with c_p1:
                     st.markdown("##### 1. Personalidade (Prompt)")
                     new_p = st.text_area("", value=d.get('prompt_full','') or '', height=350)
 
+                # --- COLUNA 2: ÁUDIO E VOZ ---
                 with c_p2:
                     st.markdown("##### 2. Áudio e Voz")
                     
@@ -357,12 +347,15 @@ if perfil == 'admin' and len(tabs) > 4:
                     
                     nova_voz = st.selectbox("Voz da IA:", vozes, index=vozes.index(v_atual))
                     
-                    # Tratamento de erro 0,8
+                    # --- TRATAMENTO DE ERRO CRÍTICO (0,8 vs 0.8) ---
+                    # Isso aqui é a "vacina" pro erro que você mandou na imagem
                     raw_temp = curr_c.get('temperature', 0.5)
                     try:
-                        if isinstance(raw_temp, str): raw_temp = raw_temp.replace(',', '.')
+                        if isinstance(raw_temp, str):
+                            raw_temp = raw_temp.replace(',', '.') # Transforma "0,8" em "0.8"
                         temp_atual = float(raw_temp)
-                    except: temp_atual = 0.5
+                    except:
+                        temp_atual = 0.5 # Valor padrão se falhar tudo
                     
                     nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
                     
@@ -375,6 +368,7 @@ if perfil == 'admin' and len(tabs) > 4:
                         - **Shimmer:** Feminina/Sofisticada
                         """)
 
+                # --- COLUNA 3: JSON TÉCNICO (TEXTO PURO) ---
                 st.markdown("##### 3. Configuração Técnica (JSON)")
                 st.caption("⚠️ Edite com cuidado.")
                 
@@ -387,8 +381,9 @@ if perfil == 'admin' and len(tabs) > 4:
                 if st.button("SALVAR CÉREBRO", type="primary"):
                     try:
                         final_json = json.loads(json_str)
+                        # Injeta valores
                         final_json['openai_voice'] = nova_voz
-                        final_json['temperature'] = nova_temp 
+                        final_json['temperature'] = nova_temp # Salva como float puro (0.8), sem aspas
                         
                         supabase.table('clientes').update({
                             'config_fluxo': final_json,
@@ -399,7 +394,7 @@ if perfil == 'admin' and len(tabs) > 4:
                         time.sleep(1)
                         st.rerun()
                     except json.JSONDecodeError:
-                        st.error("Erro: O JSON técnico está inválido.")
+                        st.error("Erro: O JSON técnico está inválido. Verifique vírgulas e chaves.")
                     except Exception as e:
                         st.error(f"Erro ao salvar: {e}")
 
