@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -6,13 +5,14 @@ from supabase import create_client
 import json
 import time
 import os
+from datetime import datetime
 
 # ==============================================================================
-# 1. SETUP & DESIGN SYSTEM OCTO
+# 1. SETUP & CORES (MANUAL OCTO)
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
-# Cores
+# Cores Oficiais
 C_BLACK_PEARL = "#001024"
 C_RESOLUTION  = "#031A89"
 C_ELECTRIC    = "#3F00FF"
@@ -20,6 +20,7 @@ C_CORNFLOWER  = "#5396FF"
 C_KHAKI       = "#E7F9A9"
 C_WHITE       = "#F8FAFC"
 
+# Gerenciamento de Estado do Tema
 if 'theme' not in st.session_state:
     st.session_state['theme'] = 'dark'
 
@@ -49,12 +50,11 @@ PALETAS = {
 P = PALETAS[st.session_state['theme']]
 LOGO_URL = "https://cdn-icons-png.flaticon.com/512/10459/10459998.png"
 
-
-# --- 🔧 SUAS CREDENCIAIS ---
-# Tenta pegar dos segredos do Streamlit, senão usa o hardcoded (pra rodar local)
+# ==============================================================================
+# 2. CONEXÃO DATABASE
+# ==============================================================================
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "")
 SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", "")
-
 
 @st.cache_resource
 def init_connection():
@@ -65,17 +65,20 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS (BOTÃO ROXO FORÇADO + VISUAL)
+# 3. CSS (VISUAL & FIX DE BOTÕES)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
 
+    /* Geral */
     .stApp {{
         background-color: {P['bg']};
         color: {P['text']};
         font-family: 'Inter', sans-serif;
     }}
+
+    /* Sidebar */
     section[data-testid="stSidebar"] {{
         background-color: {P['sidebar']};
         border-right: 1px solid rgba(0,0,0,0.1);
@@ -83,6 +86,8 @@ st.markdown(f"""
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{
         color: #FFFFFF !important;
     }}
+
+    /* Tipografia */
     h1, h2, h3, h4 {{
         font-family: 'Sora', sans-serif;
         color: {P['text']} !important;
@@ -90,8 +95,8 @@ st.markdown(f"""
     }}
     p, label {{ color: {P['text']}; }}
 
-    /* Inputs */
-    .stTextInput > div > div > input {{
+    /* Inputs & Selects */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
         background-color: {P['input_bg']};
         color: {P['input_text']};
         border: 1px solid {P['border']};
@@ -105,8 +110,8 @@ st.markdown(f"""
     div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
     div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* BOTÃO PRINCIPAL (LOGIN/SALVAR) - ROXO E BRANCO FORÇADO */
-    div.stButton > button {{
+    /* BOTÃO PRIMARY (LOGIN/SALVAR) */
+    button[kind="primary"] {{
         background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
         color: #FFFFFF !important;
         border: none !important;
@@ -116,15 +121,16 @@ st.markdown(f"""
         font-weight: 600;
         text-transform: uppercase;
         font-size: 0.85rem;
+        transition: transform 0.1s;
     }}
-    div.stButton > button:hover {{
+    button[kind="primary"]:hover {{
         opacity: 0.9;
         transform: scale(1.02);
         color: #FFFFFF !important;
     }}
-    div.stButton > button p {{ color: #FFFFFF !important; }}
+    button[kind="primary"] p {{ color: #FFFFFF !important; }}
 
-    /* Cards */
+    /* Cards KPI */
     div[data-testid="stMetric"] {{
         background-color: {P['card']};
         border: 1px solid {P['border']};
@@ -141,7 +147,7 @@ st.markdown(f"""
         opacity: 0.8;
     }}
 
-    /* Login Centralizado */
+    /* Login Wrapper */
     .login-wrapper {{
         margin-top: 10vh;
         max-width: 400px;
@@ -160,7 +166,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. LOGIN (CORREÇÃO DE ENTER E ERRO)
+# 4. FUNÇÃO DE LOGIN
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"):
@@ -182,13 +188,12 @@ def render_login_screen():
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
             
-            # Botão Primary para garantir cor e ação de submit
+            # Botão Primary para garantir cor e submit no Enter
             submitted = st.form_submit_button("ACESSAR SISTEMA", use_container_width=True, type="primary")
             
             if submitted:
-                # 1. Validação simples antes de chamar o banco (Evita erro ao dar enter vazio)
                 if not email or not senha:
-                    st.warning("Preencha e-mail e senha.")
+                    st.warning("Preencha todos os campos.")
                 else:
                     if not supabase:
                         st.error("Banco de dados desconectado.")
@@ -200,9 +205,8 @@ def render_login_screen():
                                 st.rerun()
                             else:
                                 st.error("Credenciais inválidas.")
-                        except Exception as e:
-                            # Mostra erro genérico para não sujar a tela
-                            st.error("Erro de conexão. Tente novamente.")
+                        except:
+                            st.error("Erro de conexão.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 if not st.session_state['usuario_logado']:
@@ -210,18 +214,19 @@ if not st.session_state['usuario_logado']:
     st.stop()
 
 # ==============================================================================
-# 5. DASHBOARD
+# 5. DASHBOARD PRINCIPAL
 # ==============================================================================
 user = st.session_state['usuario_logado']
 perfil = user['perfil']
 
-# SIDEBAR
+# --- SIDEBAR ---
 with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
     render_logo(width=130)
     st.markdown("---")
     st.write(f"Olá, **{user['nome_usuario']}**")
     
+    # Toggle Theme
     dark_on = (st.session_state['theme'] == 'dark')
     if st.toggle("🌙 Modo Escuro", value=dark_on):
         if st.session_state['theme'] != 'dark':
@@ -237,7 +242,7 @@ with st.sidebar:
         st.session_state['usuario_logado'] = None
         st.rerun()
 
-# DADOS
+# --- CARREGAMENTO DE DADOS ---
 if not supabase: st.stop()
 try:
     df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
@@ -245,15 +250,22 @@ except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
-# SELEÇÃO DE CLIENTE (MEMÓRIA)
+# --- SELEÇÃO DE CLIENTE COM MEMÓRIA ---
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     
-    if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
-    if st.session_state['last_cli'] not in lista: st.session_state['last_cli'] = lista[0]
+    # Inicializa memória se não existir
+    if 'last_cli' not in st.session_state:
+        st.session_state['last_cli'] = lista[0]
+    
+    # Valida se o salvo ainda existe
+    if st.session_state['last_cli'] not in lista:
+        st.session_state['last_cli'] = lista[0]
         
     idx = list(lista).index(st.session_state['last_cli'])
     sel = st.sidebar.selectbox("Cliente:", lista, index=idx, key="cli_selector")
+    
+    # Salva seleção
     st.session_state['last_cli'] = sel
     
     c_data = df_kpis[df_kpis['nome_empresa'] == sel].iloc[0]
@@ -265,7 +277,7 @@ else:
 c_id = int(c_data['cliente_id'])
 active = not bool(c_data['bot_pausado'])
 
-# HEADER
+# --- HEADER ---
 c1, c2 = st.columns([3, 1])
 with c1:
     st.title(c_data['nome_empresa'])
@@ -273,13 +285,14 @@ with c1:
 with c2:
     st.markdown("<br>", unsafe_allow_html=True)
     lbl = "⏸️ PAUSAR" if active else "▶️ ATIVAR"
-    if st.button(lbl, use_container_width=True):
+    btn_type = "secondary" if active else "primary"
+    if st.button(lbl, use_container_width=True, type=btn_type):
         supabase.table('clientes').update({'bot_pausado': active}).eq('id', c_id).execute()
         st.rerun()
 
 st.divider()
 
-# KPI
+# --- KPIS ---
 tot = c_data['total_mensagens']
 sav = round((tot * 1.5) / 60, 1)
 rev = float(c_data['receita_total'] or 0)
@@ -292,7 +305,7 @@ k4.metric("Status", "Online" if active else "Offline")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ABAS
+# --- ABAS ---
 tabs = st.tabs(["Analytics", "Espião", "Produtos", "Agenda", "Cérebro"])
 
 # 1. ANALYTICS
@@ -388,11 +401,14 @@ with tabs[2]:
 # 4. AGENDA
 with tabs[3]:
     st.subheader("Próximos Agendamentos")
+    
+    # Mapa de nomes
     r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute()
     pmap = {p['id']: p['nome'] for p in r_pr.data} if r_pr.data else {}
 
     try:
         df_final = pd.DataFrame()
+        # Busca nas duas tabelas
         rs = supabase.table('agendamentos_salao').select('data_reserva, valor_total_registrado, cliente_final_waid, produto_salao_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
         rv = supabase.table('agendamentos').select('data_hora_inicio, valor_total_registrado, servico_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
 
@@ -416,28 +432,53 @@ with tabs[3]:
             st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (CORRIGIDO: PROMPT FULL + JSON COMPLETO SEM FILTRO)
+# 5. CÉREBRO (COMPLETO)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
+        
+        st.info("💡 **Guia Rápido:** Defina aqui como o Otti se comporta. Use a 'Voz da IA' para áudios no WhatsApp.")
+
         try:
             res = supabase.table('clientes').select('config_fluxo, prompt_full').eq('id', c_id).execute()
             if res.data:
                 d = res.data[0]
-                
-                # 1. Texto do Prompt
-                st.markdown("##### Prompt (Personalidade)")
-                new_p = st.text_area("", value=d.get('prompt_full','') or '', height=300)
-                
-                # 2. JSON COMPLETO (Coluna config_fluxo inteira)
-                st.markdown("##### Configuração Técnica (JSON Completo)")
                 curr_c = d.get('config_fluxo')
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
-                # Sem filtro. Mostra tudo.
+                # --- COLUNA 1: PROMPT + VOZ ---
+                col_ia1, col_ia2 = st.columns([2, 1])
+                
+                with col_ia1:
+                    st.markdown("##### 1. Personalidade (Prompt)")
+                    new_p = st.text_area("", value=d.get('prompt_full','') or '', height=300)
+
+                with col_ia2:
+                    st.markdown("##### 2. Voz da IA")
+                    vozes = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+                    v_atual = curr_c.get('openai_voice', 'alloy')
+                    if v_atual not in vozes: v_atual = 'alloy'
+                    
+                    nova_voz = st.selectbox("Selecione o timbre:", vozes, index=vozes.index(v_atual))
+                    
+                    with st.expander("ℹ️ Guia de Vozes"):
+                        st.markdown("""
+                        - **Alloy:** Neutra (Padrão)
+                        - **Echo:** Suave/Masculina
+                        - **Onyx:** Grave/Imponente
+                        - **Fable:** Narrativa
+                        - **Nova:** Alegre/Feminina (Festas!)
+                        - **Shimmer:** Sofisticada/Feminina
+                        """)
+
+                # --- JSON COMPLETO ---
+                st.markdown("##### 3. Configuração Técnica (JSON Completo)")
+                curr_c['openai_voice'] = nova_voz
+                
                 new_c = st.data_editor(curr_c, use_container_width=True, height=400)
                 
-                if st.button("SALVAR TUDO", type="primary"):
+                if st.button("SALVAR CÉREBRO", type="primary"):
+                    new_c['openai_voice'] = nova_voz
                     supabase.table('clientes').update({'config_fluxo': json.dumps(new_c), 'prompt_full': new_p}).eq('id', c_id).execute()
-                    st.success("Atualizado com Sucesso!")
+                    st.success("Cérebro Atualizado com Sucesso!")
         except Exception as e: st.error(f"Erro: {e}")
