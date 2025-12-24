@@ -8,26 +8,20 @@ import os
 from datetime import datetime
 
 # ==============================================================================
-# 1. SETUP
+# 1. SETUP & CORES (VISUAL OCTO RESTAURADO)
 # ==============================================================================
 st.set_page_config(page_title="Otti Workspace", layout="wide", page_icon="🐙")
 
-# Cores
-C_BLACK_PEARL = "#001024"
-C_RESOLUTION  = "#031A89"
-C_ELECTRIC    = "#3F00FF"
-C_CORNFLOWER  = "#5396FF"
-C_KHAKI       = "#E7F9A9"
-C_WHITE       = "#F8FAFC"
-C_DARK_TEXT   = "#02040A"
+# Paleta Oficial Octo (A que você gostou)
+C_BG_MAIN     = "#001024" # Azul Profundo (Black Pearl)
+C_SIDEBAR     = "#020A14" # Quase Preto
+C_PURPLE_GRAD = "linear-gradient(90deg, #3F00FF 0%, #031A89 100%)" # Gradiente Roxo
+C_TEXT_WHITE  = "#F8FAFC"
+C_CARD_BG     = "rgba(3, 26, 137, 0.2)"
+C_BORDER      = "#3F00FF"
 
-if 'theme' not in st.session_state: st.session_state['theme'] = 'dark'
-
-PALETAS = {
-    'dark': { 'bg': C_BLACK_PEARL, 'sidebar': '#020A14', 'text': C_WHITE, 'card': 'rgba(3, 26, 137, 0.2)', 'border': C_ELECTRIC, 'input_bg': '#0B1221', 'input_text': C_WHITE, 'chart_template': 'plotly_dark' },
-    'light': { 'bg': '#F0F2F5', 'sidebar': C_RESOLUTION, 'text': C_DARK_TEXT, 'card': '#FFFFFF', 'border': '#D1D5DB', 'input_bg': '#FFFFFF', 'input_text': C_DARK_TEXT, 'chart_template': 'plotly_white' }
-}
-P = PALETAS[st.session_state['theme']]
+if 'theme' not in st.session_state:
+    st.session_state['theme'] = 'dark'
 
 # ==============================================================================
 # 2. CONEXÃO
@@ -44,48 +38,114 @@ def init_connection():
 supabase = init_connection()
 
 # ==============================================================================
-# 3. CSS BLINDADO (BOTÕES E LOGIN)
+# 3. CSS BLINDADO (O VISUAL QUE FUNCIONAVA)
 # ==============================================================================
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
-    .stApp {{ background-color: {P['bg']}; color: {P['text']}; font-family: 'Inter', sans-serif; }}
-    
-    /* Sidebar Fixa Escura */
-    section[data-testid="stSidebar"] {{ background-color: {P['sidebar']}; border-right: 1px solid rgba(0,0,0,0.1); }}
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span {{ color: #FFFFFF !important; }}
-    
-    /* Headers */
-    h1, h2, h3, h4 {{ font-family: 'Sora', sans-serif; color: {P['text']} !important; font-weight: 700; }}
-    p, label {{ color: {P['text']}; }}
-    
-    /* Inputs */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea {{
-        background-color: {P['input_bg']}; color: {P['input_text']}; border: 1px solid {P['border']}; border-radius: 8px;
-    }}
-    div[data-baseweb="select"] > div {{ background-color: {P['input_bg']}; color: {P['input_text']}; border-color: {P['border']}; }}
-    div[data-baseweb="select"] span {{ color: {P['input_text']}; }}
-    div[data-baseweb="option"] {{ color: {P['input_text']}; }}
 
-    /* Botão Primário (Login/Salvar) - Roxo Degradê */
+    /* --- GERAL --- */
+    .stApp {{
+        background-color: {C_BG_MAIN};
+        color: {C_TEXT_WHITE};
+        font-family: 'Inter', sans-serif;
+    }}
+    
+    /* --- SIDEBAR --- */
+    section[data-testid="stSidebar"] {{
+        background-color: {C_SIDEBAR};
+        border-right: 1px solid rgba(255,255,255,0.1);
+    }}
+    section[data-testid="stSidebar"] p, 
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] div {{
+        color: #FFFFFF !important;
+    }}
+
+    /* --- TIPOGRAFIA --- */
+    h1, h2, h3, h4 {{
+        font-family: 'Sora', sans-serif;
+        color: {C_TEXT_WHITE} !important;
+        font-weight: 700;
+    }}
+    p, label, span {{ color: {C_TEXT_WHITE}; }}
+
+    /* --- INPUTS (LOGIN LEGÍVEL) --- */
+    .stTextInput > div > div > input, 
+    .stTextArea > div > div > textarea {{
+        background-color: #0B1221 !important;
+        color: #FFFFFF !important;
+        border: 1px solid {C_BORDER};
+        border-radius: 8px;
+    }}
+    
+    /* Selectbox */
+    div[data-baseweb="select"] > div {{
+        background-color: #0B1221 !important;
+        color: #FFFFFF !important;
+        border-color: {C_BORDER} !important;
+    }}
+    div[data-baseweb="select"] span {{ color: #FFFFFF !important; }}
+    div[data-baseweb="popover"] {{ background-color: #0B1221 !important; }}
+    div[data-baseweb="option"] {{ color: #FFFFFF !important; }}
+
+    /* --- BOTÃO PRIMARY (ACESSAR / SALVAR) --- */
     button[kind="primary"] {{
-        background: linear-gradient(90deg, #3F00FF 0%, #031A89 100%) !important;
-        color: #FFFFFF !important; border: none !important; padding: 0.6rem 1.2rem; border-radius: 6px;
-        font-family: 'Sora', sans-serif; font-weight: 600; text-transform: uppercase; font-size: 0.85rem;
+        background: {C_PURPLE_GRAD} !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-family: 'Sora', sans-serif;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }}
+    button[kind="primary"]:hover {{
+        opacity: 0.9;
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(63, 0, 255, 0.4);
     }}
     button[kind="primary"] p {{ color: #FFFFFF !important; }}
-    button[kind="primary"]:hover {{ opacity: 0.9; transform: scale(1.02); box-shadow: 0 4px 12px rgba(63, 0, 255, 0.4); }}
 
-    /* Botão Sair (Sidebar) - Forçar Branco */
+    /* --- BOTÃO SAIR (SIDEBAR) --- */
+    /* Força borda e texto branco para contrastar com fundo escuro */
     section[data-testid="stSidebar"] button {{
-        background-color: transparent !important; 
-        border: 1px solid rgba(255,255,255,0.4) !important;
+        background-color: transparent !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
     }}
     section[data-testid="stSidebar"] button p {{ color: #FFFFFF !important; }}
-    section[data-testid="stSidebar"] button:hover {{ border-color: #FFFFFF !important; background-color: rgba(255,255,255,0.1) !important; }}
+    section[data-testid="stSidebar"] button:hover {{
+        background-color: rgba(255,255,255,0.1) !important;
+        border-color: #FFFFFF !important;
+    }}
 
-    /* Login Wrapper */
-    .login-wrapper {{ margin-top: 10vh; max-width: 400px; margin-left: auto; margin-right: auto; text-align: center; }}
+    /* --- CARDS KPI --- */
+    div[data-testid="stMetric"] {{
+        background-color: {C_CARD_BG};
+        border: 1px solid {C_BORDER};
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }}
+    div[data-testid="stMetricValue"] {{
+        color: #E7F9A9 !important; /* Amarelo Neon Octo */
+        font-family: 'Sora', sans-serif;
+    }}
+    label[data-testid="stMetricLabel"] {{ color: rgba(255,255,255,0.7) !important; }}
+
+    /* --- LOGIN WRAPPER --- */
+    .login-wrapper {{
+        margin-top: 10vh;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        padding: 2rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }}
     .login-wrapper div[data-testid="stImage"] {{ margin: 0 auto; display: block; }}
     
     #MainMenu, footer, header {{visibility: hidden;}}
@@ -94,7 +154,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 4. LOGIN
+# 4. LOGIN (COM FORM E ENTER FUNCIONANDO)
 # ==============================================================================
 def render_logo(width=100):
     if os.path.exists("logo.png"): st.image("logo.png", width=width)
@@ -107,9 +167,8 @@ def render_login_screen():
     with c2:
         st.markdown('<div class="login-wrapper">', unsafe_allow_html=True)
         render_logo(width=120)
-        st.markdown(f"<h3 style='margin-bottom:30px; color:{P['text']}; text-align:center;'>Otti Workspace</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='margin-bottom:30px; text-align:center;'>Otti Workspace</h3>", unsafe_allow_html=True)
         
-        # Form garante que Enter funcione
         with st.form("login_master"):
             email = st.text_input("E-mail")
             senha = st.text_input("Senha", type="password")
@@ -119,14 +178,14 @@ def render_login_screen():
                 if not email or not senha:
                     st.warning("Preencha todos os campos.")
                 else:
-                    if not supabase: st.error("Erro interno: Banco desconectado.")
+                    if not supabase: st.error("Banco de dados desconectado.")
                     else:
                         try:
                             res = supabase.table('acesso_painel').select('*').eq('email', email).eq('senha', senha).execute()
                             if res.data:
                                 st.session_state['usuario_logado'] = res.data[0]
                                 st.rerun()
-                            else: st.error("Credenciais inválidas.")
+                            else: st.error("Acesso Negado.")
                         except: st.error("Erro de conexão.")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -147,26 +206,22 @@ with st.sidebar:
     st.markdown("---")
     st.write(f"Olá, **{user['nome_usuario']}**")
     
-    dark_on = (st.session_state['theme'] == 'dark')
-    if st.toggle("🌙 Modo Escuro", value=dark_on):
-        if st.session_state['theme'] != 'dark':
-            st.session_state['theme'] = 'dark'
-            st.rerun()
-    else:
-        if st.session_state['theme'] != 'light':
-            st.session_state['theme'] = 'light'
-            st.rerun()
+    # Toggle (apenas visual, forçamos dark no CSS)
+    st.toggle("Modo Escuro", value=True, disabled=True)
+    
     st.markdown("---")
     if st.button("SAIR"):
         st.session_state['usuario_logado'] = None
         st.rerun()
 
+# DADOS
 if not supabase: st.stop()
 try: df_kpis = pd.DataFrame(supabase.table('view_dashboard_kpis').select("*").execute().data)
 except:
     st.error("Erro ao carregar dados.")
     st.stop()
 
+# SELECTOR
 if perfil == 'admin':
     lista = df_kpis['nome_empresa'].unique()
     if 'last_cli' not in st.session_state: st.session_state['last_cli'] = lista[0]
@@ -191,13 +246,14 @@ with c1:
 with c2:
     st.markdown("<br>", unsafe_allow_html=True)
     lbl = "⏸️ PAUSAR" if active else "▶️ ATIVAR"
-    btn_type = "secondary" if active else "primary"
-    if st.button(lbl, use_container_width=True, type=btn_type):
+    # Botão secundário fora da sidebar (usa CSS padrão do main)
+    if st.button(lbl, use_container_width=True):
         supabase.table('clientes').update({'bot_pausado': active}).eq('id', c_id).execute()
         st.rerun()
 
 st.divider()
 
+# KPIS
 tot = c_data['total_mensagens']
 sav = round((tot * 1.5) / 60, 1)
 rev = float(c_data['receita_total'] or 0)
@@ -208,10 +264,8 @@ k3.metric("Atendimentos", c_data['total_atendimentos'])
 k4.metric("Status", "Online" if active else "Offline")
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ABAS
 tabs = st.tabs(["Analytics", "Espião", "Produtos", "Agenda", "Cérebro"])
 
-# 1. ANALYTICS
 with tabs[0]:
     try:
         r_s = supabase.table('agendamentos_salao').select('created_at, valor_sinal_registrado, status, produto_salao_id').eq('cliente_id', c_id).execute().data
@@ -231,21 +285,20 @@ with tabs[0]:
             with c_g1:
                 st.markdown("##### Receita Diária")
                 df_g = df.groupby('dt')['v'].sum().reset_index()
-                fig = px.line(df_g, x='dt', y='v', template=P['chart_template'], markers=True)
-                fig.update_traces(line_color=C_ELECTRIC, line_width=3)
-                fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                fig = px.line(df_g, x='dt', y='v', template='plotly_dark', markers=True)
+                fig.update_traces(line_color="#3F00FF", line_width=3)
+                fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={'color': 'white'})
                 st.plotly_chart(fig, use_container_width=True)
             with c_g2:
                 st.markdown("##### Produtos Mais Vendidos")
                 df_top = df['p'].value_counts().reset_index().head(5)
-                fig2 = px.bar(df_top, x='count', y='p', orientation='h', template=P['chart_template'])
-                fig2.update_traces(marker_color=C_CORNFLOWER)
-                fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+                fig2 = px.bar(df_top, x='count', y='p', orientation='h', template='plotly_dark')
+                fig2.update_traces(marker_color="#5396FF")
+                fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font={'color': 'white'})
                 st.plotly_chart(fig2, use_container_width=True)
         else: st.info("Sem dados.")
     except Exception as e: st.error(f"Erro Visual: {e}")
 
-# 2. ESPIÃO
 with tabs[1]:
     cl, cr = st.columns([1, 2])
     with cl:
@@ -276,7 +329,6 @@ with tabs[1]:
                         with st.chat_message(role, avatar=av): st.write(m['content'])
             except: pass
 
-# 3. PRODUTOS
 with tabs[2]:
     c1, c2 = st.columns([2,1])
     with c1:
@@ -293,32 +345,27 @@ with tabs[2]:
                 supabase.table('produtos').insert({"cliente_id": c_id, "nome": n, "categoria": c, "ativo": True, "regras_preco": json.dumps(js)}).execute()
                 st.rerun()
 
-# 4. AGENDA
 with tabs[3]:
     st.subheader("Próximos Agendamentos")
-    r_pr = supabase.table('produtos').select('id, nome').eq('cliente_id', c_id).execute()
-    pmap = {p['id']: p['nome'] for p in r_pr.data} if r_pr.data else {}
     try:
         df_final = pd.DataFrame()
-        rs = supabase.table('agendamentos_salao').select('data_reserva, valor_total_registrado, cliente_final_waid, produto_salao_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
-        rv = supabase.table('agendamentos').select('data_hora_inicio, valor_total_registrado, servico_id').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
+        rs = supabase.table('agendamentos_salao').select('data_reserva, valor_total_registrado, cliente_final_waid').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
+        rv = supabase.table('agendamentos').select('data_hora_inicio, valor_total_registrado').eq('cliente_id', c_id).order('created_at', desc=True).limit(50).execute()
         if rs.data:
             d = pd.DataFrame(rs.data)
-            d['Item'] = d['produto_salao_id'].map(pmap).fillna('Salão')
             d['Data'] = pd.to_datetime(d['data_reserva']).dt.strftime('%d/%m/%Y')
-            df_final = d[['Data', 'valor_total_registrado', 'Item', 'cliente_final_waid']]
-            df_final.columns = ['Data', 'Valor (R$)', 'O que', 'Cliente']
+            df_final = d[['Data', 'valor_total_registrado', 'cliente_final_waid']]
+            df_final.columns = ['Data', 'Valor (R$)', 'Cliente']
         elif rv.data:
             d = pd.DataFrame(rv.data)
-            d['Item'] = d['servico_id'].map(pmap).fillna('Serviço')
             d['Data/Hora'] = pd.to_datetime(d['data_hora_inicio']).dt.strftime('%d/%m/%Y %H:%M')
-            df_final = d[['Data/Hora', 'valor_total_registrado', 'Item']]
-            df_final.columns = ['Data/Hora', 'Valor (R$)', 'O que']
+            df_final = d[['Data/Hora', 'valor_total_registrado']]
+            df_final.columns = ['Data/Hora', 'Valor (R$)']
         if not df_final.empty: st.dataframe(df_final, use_container_width=True, hide_index=True)
         else: st.info("Agenda vazia.")
     except Exception as e: st.error(f"Erro agenda: {e}")
 
-# 5. CÉREBRO (COM TRATAMENTO DE ERRO "0,8")
+# 5. CÉREBRO (CORREÇÃO ERRO VÍRGULA + VISUAL LIMPO)
 if perfil == 'admin' and len(tabs) > 4:
     with tabs[4]:
         st.subheader("Configuração da IA")
@@ -326,8 +373,6 @@ if perfil == 'admin' and len(tabs) > 4:
             res = supabase.table('clientes').select('config_fluxo, prompt_full').eq('id', c_id).execute()
             if res.data:
                 d = res.data[0]
-                
-                # Leitura Segura do JSONB
                 curr_c = d.get('config_fluxo') or {}
                 if isinstance(curr_c, str): curr_c = json.loads(curr_c)
                 
@@ -340,35 +385,30 @@ if perfil == 'admin' and len(tabs) > 4:
                 # --- COLUNA 2: ÁUDIO E VOZ ---
                 with c_p2:
                     st.markdown("##### 2. Áudio e Voz")
-                    
                     vozes = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
                     v_atual = curr_c.get('openai_voice', 'alloy')
                     if v_atual not in vozes: v_atual = 'alloy'
-                    
                     nova_voz = st.selectbox("Voz da IA:", vozes, index=vozes.index(v_atual))
                     
-                    # --- TRATAMENTO DE ERRO CRÍTICO (0,8 vs 0.8) ---
-                    # Isso aqui é a "vacina" pro erro que você mandou na imagem
+                    # CORREÇÃO DO ERRO '0,8' PARA O SLIDER
                     raw_temp = curr_c.get('temperature', 0.5)
                     try:
-                        if isinstance(raw_temp, str):
-                            raw_temp = raw_temp.replace(',', '.') # Transforma "0,8" em "0.8"
+                        if isinstance(raw_temp, str): raw_temp = raw_temp.replace(',', '.')
                         temp_atual = float(raw_temp)
-                    except:
-                        temp_atual = 0.5 # Valor padrão se falhar tudo
+                    except: temp_atual = 0.5
                     
-                    nova_temp = st.slider("Criatividade (Temperatura):", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
+                    nova_temp = st.slider("Criatividade da Resposta:", min_value=0.0, max_value=1.0, value=temp_atual, step=0.1)
                     
                     with st.expander("🗣️ Guia de Vozes"):
                         st.markdown("""
-                        - **Alloy:** Neutra/Padrão
+                        - **Alloy:** Neutra
                         - **Echo:** Masculina/Suave
                         - **Onyx:** Masculina/Grave
                         - **Nova:** Feminina/Alegre
                         - **Shimmer:** Feminina/Sofisticada
                         """)
 
-                # --- COLUNA 3: JSON TÉCNICO (TEXTO PURO) ---
+                # --- COLUNA 3: JSON TÉCNICO (TEXT_AREA = SEGURANÇA) ---
                 st.markdown("##### 3. Configuração Técnica (JSON)")
                 st.caption("⚠️ Edite com cuidado.")
                 
@@ -381,20 +421,18 @@ if perfil == 'admin' and len(tabs) > 4:
                 if st.button("SALVAR CÉREBRO", type="primary"):
                     try:
                         final_json = json.loads(json_str)
-                        # Injeta valores
                         final_json['openai_voice'] = nova_voz
-                        final_json['temperature'] = nova_temp # Salva como float puro (0.8), sem aspas
+                        final_json['temperature'] = nova_temp # Salva float puro (0.8)
                         
                         supabase.table('clientes').update({
                             'config_fluxo': final_json,
                             'prompt_full': new_p
                         }).eq('id', c_id).execute()
-                        
-                        st.success("Cérebro Atualizado com Sucesso!")
+                        st.success("Salvo com sucesso!")
                         time.sleep(1)
                         st.rerun()
                     except json.JSONDecodeError:
-                        st.error("Erro: O JSON técnico está inválido. Verifique vírgulas e chaves.")
+                        st.error("Erro no JSON.")
                     except Exception as e:
                         st.error(f"Erro ao salvar: {e}")
 
